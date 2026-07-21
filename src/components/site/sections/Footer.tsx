@@ -58,15 +58,15 @@ export default function Footer() {
             <div className="font-display font-black text-lg mb-4">Reach Us</div>
             <ul className="space-y-3 text-sm text-white/80">
               <li className="flex items-start gap-2.5">
-                <PhoneCall className="h-4 w-4 text-sunny shrink-0 mt-0.5" />
-                <a href="tel:+917755994123" className="hover:text-sunny transition">+91 7755994123</a>
+                <PhoneCall className="h-4 w-4 shrink-0 mt-0.5" />
+                <a href="tel:+917755994123" className="hover:text-gradient-sun transition">+91 7755994123</a>
               </li>
               <li className="flex items-start gap-2.5">
-                <Mail className="h-4 w-4 text-sunny shrink-0 mt-0.5" />
-                <a href="mailto:support@caryanam.com" className="hover:text-sunny transition">support@caryanam.com</a>
+                <Mail className="h-4 w-4  shrink-0 mt-0.5" />
+                <a href="mailto:support@caryanam.com" className="hover:text-gradient-sun transition">support@caryanam.com</a>
               </li>
               <li className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4 text-sunny shrink-0 mt-0.5" />
+                <MapPin className="h-4 w-4  shrink-0 mt-0.5" />
                 <span>Kharadi, Pune, 411014</span>
               </li>
             </ul>
@@ -74,8 +74,8 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-sm text-white/60">
+          <div>Developed by <span className="text-gradient-sun italic font-black">Caryanamindia Pvt Ltd</span></div>
           <div>© {new Date().getFullYear()} Caryanam Marketing Agency. All rights reserved.</div>
-          <div>Kharadi, Pune, 411014</div>
         </div>
       </div>
     </footer>
