@@ -7,6 +7,8 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip } from "recharts";
 import { Blob } from "@/components/site/Decor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+import { useAdminClientDetails } from "@/hooks/admin/useAdminClients";
+
 const perfData = [
   { d: "W1", v: 2200 }, { d: "W2", v: 3200 }, { d: "W3", v: 4100 }, { d: "W4", v: 5800 },
   { d: "W5", v: 5100 }, { d: "W6", v: 7200 }, { d: "W7", v: 8400 }, { d: "W8", v: 9600 },
@@ -33,6 +35,7 @@ const INITIAL_CAMPAIGNS = [
 export default function AdminClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { client: apiData, isLoading: isApiLoading } = useAdminClientDetails(id || "");
   const [client, setClient] = useState<any>(null);
   const [tab, setTab] = useState("Overview");
 
@@ -61,25 +64,36 @@ export default function AdminClientDetails() {
   const [editBillingBasis, setEditBillingBasis] = useState("monthly");
 
   useEffect(() => {
-    let clientsList = CLIENTS;
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("clients");
-      if (stored) {
-        try {
-          clientsList = JSON.parse(stored);
-        } catch (e) { }
-      }
+    if (apiData) {
+      setClient({
+        id: String(apiData.id),
+        company: apiData.companyName,
+        owner: apiData.ownerName,
+        category: apiData.category,
+        phone: apiData.phoneNumber,
+        whatsapp: apiData.whatsappNumber || apiData.phoneNumber,
+        email: apiData.email,
+        revenue: 15000,
+        campaigns: 4,
+        status: "active",
+        lastActivity: "Active now",
+        plan: "Growth",
+        billingBasis: "monthly",
+      });
+      setEditStatus("active");
+      setEditPlan("Growth");
+      setEditBillingBasis("monthly");
+      return;
     }
-    const found = clientsList.find((x) => x.id === id);
-    if (!found) {
-      navigate("/admin/clients");
-    } else {
+
+    const found = CLIENTS.find((x) => x.id === id);
+    if (found) {
       setClient(found);
       setEditStatus(found.status);
       setEditPlan(found.plan || "Growth");
       setEditBillingBasis(found.billingBasis || "monthly");
     }
-  }, [id, navigate]);
+  }, [id, apiData]);
 
   const approvedTemplates = TEMPLATES.filter(t => t.status === "Approved");
 
@@ -123,17 +137,6 @@ export default function AdminClientDetails() {
   // Edit Client details
   const handleUpdateClient = (e: React.FormEvent) => {
     e.preventDefault();
-    let clientsList = CLIENTS;
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("clients");
-      if (stored) {
-        try {
-          clientsList = JSON.parse(stored);
-        } catch (err) { }
-      }
-    }
-    const newList = clientsList.map(x => x.id === client.id ? { ...x, plan: editPlan, status: editStatus, billingBasis: editBillingBasis } : x);
-    localStorage.setItem("clients", JSON.stringify(newList));
     setClient((prev: any) => ({ ...prev, plan: editPlan, status: editStatus, billingBasis: editBillingBasis }));
     setIsEditOpen(false);
   };

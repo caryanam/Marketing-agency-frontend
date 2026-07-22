@@ -3,30 +3,54 @@ import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { CLIENTS } from "@/lib/admin-data";
 import {
-  LayoutDashboard, Send, Users, LayoutTemplate, BarChart3, User, LogOut, MessageCircle, Search, Bell, CreditCard, MailOpen, Menu, X
+  LayoutDashboard, Send, Users, LayoutTemplate, BarChart3, User, LogOut, MessageCircle, Search, Bell, CreditCard, MailOpen, Menu, X, Lock
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useAuth } from "@/hooks/auth/useAuth";
+
+import { useClientProfile } from "@/hooks/client/useClientProfile";
+import {
+  useClientNotifications,
+  useClientUnreadCount,
+  useClientMarkRead,
+  useClientMarkAllRead,
+} from "@/hooks/client/useClientNotifications";
 
 export default function ClientLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
+  const { logoutClient } = useAuth();
+  const { client } = useClientProfile();
+
   const [ready, setReady] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [name, setName] = useState("Client");
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("Growth");
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Campaign Completed", description: "Your 'Diwali Blast 2026' campaign has successfully reached all recipients.", time: "15m ago", read: false },
-    { id: 2, title: "Template Approved", description: "Meta approved your 'Welcome Discount Code' template.", time: "4h ago", read: false },
-    { id: 3, title: "Weekly Report Ready", description: "Your weekly performance summary report is now ready for download.", time: "1d ago", read: true },
-  ]);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+
+  const { data: notifications = [] } = useClientNotifications();
+  const { data: unreadCount = 0 } = useClientUnreadCount();
+  const markReadMutation = useClientMarkRead();
+  const markAllReadMutation = useClientMarkAllRead();
 
   const toggleRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    markReadMutation.mutate([id]);
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    markAllReadMutation.mutate();
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "—";
+    }
   };
 
   useEffect(() => {
@@ -34,38 +58,71 @@ export default function ClientLayout() {
   }, [loc.pathname]);
 
   useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated") === "true";
-    const role = localStorage.getItem("role");
-    if (!auth) {
-      navigate("/login");
-      return;
-    }
-    if (role === "admin") {
-      navigate("/admin");
-      return;
-    }
-    const storedEmail = localStorage.getItem("userEmail") || "";
-    setEmail(storedEmail);
-
-    let clientsList = CLIENTS;
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("clients");
-      if (stored) {
-        try {
-          clientsList = JSON.parse(stored);
-        } catch (e) {}
+    const checkClientAuth = () => {
+      try {
+        const raw = localStorage.getItem("clientData");
+        if (!raw) {
+          setShowExpiredModal(true);
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          setShowExpiredModal(true);
+          return;
+        }
+        const item = parsed[parsed.length - 1];
+        if (!item?.token) {
+          setShowExpiredModal(true);
+          return;
+        }
+        if (item.decoded?.exp) {
+          const nowInSec = Math.floor(Date.now() / 1000);
+          if (item.decoded.exp < nowInSec) {
+            setShowExpiredModal(true);
+            return;
+          }
+        }
+        if (item.email) setEmail(item.email);
+        if (item.name || item.ownerName) setName(item.name || item.ownerName);
+      } catch (e) {
+        setShowExpiredModal(true);
       }
-    }
-    const found = clientsList.find(c => c.email.toLowerCase() === storedEmail.toLowerCase());
-    if (found) {
-      setName(found.owner);
-      setPlan(found.plan || "Growth");
-    } else {
-      setName(localStorage.getItem("userName") || "Client");
-      setPlan("Growth");
+    };
+
+    checkClientAuth();
+
+    // Instant polling interval to detect localStorage removal immediately without refresh
+    const timer = setInterval(() => {
+      const raw = localStorage.getItem("clientData");
+      if (!raw) {
+        setShowExpiredModal(true);
+      }
+    }, 800);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "clientData" && !e.newValue) {
+        setShowExpiredModal(true);
+      }
+    };
+
+    const handleExpiredEvent = () => setShowExpiredModal(true);
+    window.addEventListener("client-token-expired", handleExpiredEvent);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("client-token-expired", handleExpiredEvent);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (client) {
+      setName(client.ownerName || client.companyName || "Client");
+      setEmail(client.email || "");
     }
     setReady(true);
-  }, [navigate]);
+  }, [client]);
 
   if (!ready) {
     return (
@@ -97,6 +154,7 @@ export default function ClientLayout() {
         { to: "/client/plans", label: "My Plan", icon: CreditCard },
         { to: "/client/reports", label: "Reports", icon: BarChart3 },
         { to: "/client/profile", label: "Profile", icon: User },
+        { to: "/client/feedback", label: "My Feedback", icon: MessageCircle },
       ]
     }
   ];
@@ -137,11 +195,10 @@ export default function ClientLayout() {
                     key={n.to}
                     to={n.to}
                     onClick={() => setMobileOpen(false)}
-                    className={`group flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 transform hover:translate-x-1.5 ${
-                      active
-                        ? "bg-gradient-brand text-white shadow-glow"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                    }`}
+                    className={`group flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 transform hover:translate-x-1.5 ${active
+                      ? "bg-gradient-brand text-white shadow-glow"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}
                   >
                     <n.icon className={`h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${active ? "text-white" : "text-white/60 group-hover:text-white"}`} />
                     <span className="font-bold text-sm tracking-wide whitespace-nowrap">{n.label}</span>
@@ -159,18 +216,15 @@ export default function ClientLayout() {
           {initials || "C"}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bold text-sm truncate text-white">{name}</div>
+          <div className="font-bold text-sm truncate text-white capitalize">{name}</div>
           <div className="text-xs text-white/50 truncate">{email || "Client account"}</div>
         </div>
         <button
           onClick={() => {
-            localStorage.removeItem("isAuthenticated");
-            localStorage.removeItem("role");
-            localStorage.removeItem("userEmail");
-            localStorage.removeItem("userName");
+            logoutClient();
             navigate("/login");
           }}
-          className="p-2 rounded-xl hover:bg-red-500/20 text-white/70 hover:text-red-400 transition shrink-0"
+          className="p-2 rounded-xl hover:bg-red-500/20 text-white/70 hover:text-red-400 transition shrink-0 cursor-pointer"
           title="Logout"
         >
           <LogOut className="h-4 w-4" />
@@ -229,16 +283,18 @@ export default function ClientLayout() {
             <PopoverTrigger asChild>
               <button className="p-3 rounded-2xl bg-cream hover:bg-white transition relative cursor-pointer shrink-0">
                 <Bell className="h-4 w-4 text-emerald-deep" />
-                {notifications.some(n => !n.read) && (
-                  <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-tangerine border border-white animate-pulse" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-tangerine text-white border border-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-sm">
+                    {unreadCount}
+                  </span>
                 )}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0 rounded-2xl border-white/60 bg-white/95 backdrop-blur shadow-glow overflow-hidden z-50 mr-4">
               <div className="p-4 border-b border-cream flex items-center justify-between">
                 <span className="font-display font-black text-emerald-deep">Notifications</span>
-                {notifications.some(n => !n.read) && (
-                  <button 
+                {unreadCount > 0 && (
+                  <button
                     onClick={markAllAsRead}
                     className="text-[11px] font-bold text-brand hover:text-emerald-deep transition flex items-center gap-1 cursor-pointer"
                   >
@@ -253,20 +309,20 @@ export default function ClientLayout() {
                   </div>
                 ) : (
                   notifications.map((n) => (
-                    <div 
-                      key={n.id} 
-                      onClick={() => toggleRead(n.id)}
-                      className={`p-4 transition cursor-pointer hover:bg-cream/40 flex gap-3 ${!n.read ? "bg-brand/5" : ""}`}
+                    <div
+                      key={n.id}
+                      onClick={() => !n.isRead && toggleRead(n.id)}
+                      className={`p-4 transition cursor-pointer hover:bg-cream/40 flex gap-3 ${!n.isRead ? "bg-brand/5" : ""}`}
                     >
                       <div className="flex-1">
                         <div className="flex justify-between items-start gap-2">
-                          <span className={`text-xs font-bold ${!n.read ? "text-emerald-deep" : "text-foreground/80"}`}>{n.title}</span>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">{n.time}</span>
+                          <span className={`text-xs font-bold ${!n.isRead ? "text-emerald-deep" : "text-slate-700"}`}>{n.title}</span>
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">{formatTime(n.createdAt)}</span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{n.description}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{n.message}</p>
                       </div>
                       <div className="flex flex-col justify-between items-end">
-                        {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
+                        {!n.isRead && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
                       </div>
                     </div>
                   ))
@@ -280,6 +336,37 @@ export default function ClientLayout() {
           <Outlet />
         </motion.div>
       </main>
+
+      {/* CLIENT SESSION EXPIRED MODAL OVERLAY */}
+      <AnimatePresence>
+        {showExpiredModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-emerald-100 text-center relative"
+            >
+              <div className="h-14 w-14 rounded-2xl bg-emerald-100 text-emerald-800 grid place-items-center mx-auto mb-4">
+                <Lock className="h-7 w-7" />
+              </div>
+              <h3 className="font-display font-black text-xl text-emerald-950">Client Session Expired</h3>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                Your authorization token is missing or has expired. Please sign in to access your Client Dashboard.
+              </p>
+              <button
+                onClick={() => {
+                  logoutClient();
+                  navigate("/login");
+                }}
+                className="mt-6 w-full py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm shadow-md transition cursor-pointer"
+              >
+                Sign In Again
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

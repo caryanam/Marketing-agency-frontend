@@ -1,17 +1,78 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Navbar } from "@/components/site/Navbar";
 import Footer from "@/components/site/sections/Footer";
 import supportImg from "@/assets/support-illustration.png";
 import { Blob } from "@/components/site/Decor";
-import { MessageSquare, PhoneCall, Mail, MapPin, ArrowRight } from "lucide-react";
+import { MessageSquare, PhoneCall, Mail, MapPin, ArrowRight, CheckCircle2 } from "lucide-react";
 import { fadeUp } from "@/lib/animations";
+import toast from "react-hot-toast";
+import { useEnquiry } from "@/hooks/public/useEnquiry";
 
 export default function ContactPage() {
+  const { createEnquiry, isSubmitting } = useEnquiry();
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handlePhoneInput = (val: string) => {
+    const cleaned = val.replace(/\D/g, "");
+    if (cleaned.length > 0) {
+      const firstDigit = cleaned[0];
+      if (!["6", "7", "8", "9"].includes(firstDigit)) {
+        toast.error("Mobile number must start with 6, 7, 8, or 9.");
+        return;
+      }
+    }
+    if (cleaned.length <= 10) {
+      setPhone(cleaned);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!phone || phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+    if (!message.trim()) {
+      toast.error("Please enter your goals description.");
+      return;
+    }
+
+    const result = await createEnquiry({
+      name,
+      phoneNumber: phone,
+      email,
+      goals: message,
+    });
+
+    if (result.success) {
+      setName("");
+      setPhone("");
+      setEmail("");
+      setMessage("");
+      setSubmitted(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cream font-sans flex flex-col justify-between overflow-x-hidden">
       <div>
         <Navbar />
-        
+
         {/* Top Hero Banner */}
         <section className="pt-32 pb-14 bg-cream text-foreground relative border-b border-emerald-100/60">
           <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
@@ -34,7 +95,7 @@ export default function ContactPage() {
           <Blob className="absolute right-0 bottom-10 w-[450px] h-[450px] text-sunny/30" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10 space-y-16">
-            
+
             {/* Top Side: 3 Quick Contact Info Cards */}
             <div className="grid md:grid-cols-3 gap-6">
               <div className="p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
@@ -77,7 +138,7 @@ export default function ContactPage() {
 
             {/* Main Grid: Left = Support Illustration, Right = Contact Form */}
             <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-center">
-              
+
               {/* Left Column: Support Illustration + Floating Badges */}
               <motion.div {...fadeUp} className="relative">
                 <div className="absolute inset-8 rounded-[48px] bg-gradient-teal -rotate-3 shadow-glow" />
@@ -106,15 +167,75 @@ export default function ContactPage() {
                   Hi there! <span className="italic text-gradient-brand">What can we build</span> for you today?
                 </h2>
 
-                <form className="mt-8 grid sm:grid-cols-2 gap-4" onSubmit={(e) => e.preventDefault()}>
-                  <input placeholder="Your Name" className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium" />
-                  <input placeholder="Phone Number" className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium" />
-                  <input placeholder="Email Address" className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium" />
-                  <textarea placeholder="Tell us about your goals..." rows={4} className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium resize-none" />
-                  <button type="button" className="col-span-2 mt-2 px-7 py-4 rounded-full bg-brand text-white font-bold shadow-glow hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2 cursor-pointer">
-                    Send Message <ArrowRight className="h-4 w-4" />
-                  </button>
-                </form>
+                {submitted ? (
+                  <div className="mt-8 p-8 rounded-3xl bg-white/90 backdrop-blur border border-emerald-200 text-center space-y-4 shadow-float">
+                    <div className="h-16 w-16 bg-emerald-100 text-emerald-deep rounded-full grid place-items-center mx-auto">
+                      <CheckCircle2 className="h-8 w-8 text-brand" />
+                    </div>
+                    <h3 className="font-display font-black text-2xl text-emerald-deep">
+                      Enquiry Received!
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Thank you for contacting Caryanam. Our team has received your enquiry and will respond within 15 minutes.
+                    </p>
+                    <button
+                      onClick={() => setSubmitted(false)}
+                      className="px-6 py-2.5 rounded-full bg-brand text-white font-bold text-xs shadow-glow hover:opacity-90 transition cursor-pointer"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
+                ) : (
+                  <form className="mt-8 grid sm:grid-cols-2 gap-4" onSubmit={handleSubmit}>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Your Name *"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                    />
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      placeholder="Phone Number (10 digits) *"
+                      value={phone}
+                      onChange={(e) => handlePhoneInput(e.target.value)}
+                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                    />
+                    <input
+                      type="email"
+                      required
+                      placeholder="Email Address *"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                    />
+                    <textarea
+                      required
+                      placeholder="Tell us about your goals or questions... *"
+                      rows={4}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm resize-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="col-span-2 mt-2 px-7 py-4 rounded-full bg-brand text-white font-bold shadow-glow hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>Send Message</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
 
                 <div className="mt-8 pt-6 border-t border-border/40 grid sm:grid-cols-3 gap-3 text-xs text-emerald-deep font-semibold">
                   <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7755994123</div>

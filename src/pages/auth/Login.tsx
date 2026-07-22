@@ -1,74 +1,242 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   MessageCircle, Lock, Mail, Eye, EyeOff,
-  ArrowRight, ShieldCheck, User,
+  ArrowRight, ShieldCheck, User, X, KeyRound, Building2, Phone
 } from "lucide-react";
+import toast from "react-hot-toast";
 import loginBg from "@/assets/login-bg.png";
 import loginHero from "@/assets/login-hero.png";
 import loginAvatar from "@/assets/login-avatar.png";
 import bgVideo from "@/assets/now_animatied_this_only_waves.mp4";
 
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useClientAuth } from "@/hooks/auth/useClientAuth";
+
+const CATEGORIES = [
+  "Used Cars",
+  "Healthcare",
+  "Real Estate",
+  "Garages",
+  "Insurance",
+  "Education",
+  "Hospitality",
+  "Finance",
+];
+
 export default function Login() {
   const navigate = useNavigate();
+  const auth = useAuth();
+  const clientAuth = useClientAuth();
+
   const [isRegister, setIsRegister] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [category, setCategory] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (localStorage.getItem("isAuthenticated") === "true") {
-      navigate(localStorage.getItem("role") === "admin" ? "/admin" : "/client");
+  // Forgot Password Modal state
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState<"request" | "verify" | "reset">("request");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [newPassword, setNewPassword] = useState("");
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+
+  const handleOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = digit;
+    setOtpDigits(newDigits);
+    setOtp(newDigits.join(""));
+
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus();
     }
-  }, [navigate]);
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        otpRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pastedData) return;
+
+    const newDigits = ["", "", "", "", "", ""];
+    for (let i = 0; i < pastedData.length; i++) {
+      newDigits[i] = pastedData[i];
+    }
+    setOtpDigits(newDigits);
+    setOtp(newDigits.join(""));
+
+    const focusIndex = Math.min(pastedData.length, 5);
+    otpRefs.current[focusIndex]?.focus();
+  };
+
+  const handlePhoneInput = (value: string, setter: (val: string) => void) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) {
+      setter("");
+      return;
+    }
+    const firstDigit = digits.charAt(0);
+    if (firstDigit < "6") {
+      toast.error("Mobile number must start with 6, 7, 8, or 9.");
+      return;
+    }
+    setter(digits.slice(0, 10));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
 
     if (isRegister) {
-      if (!fullName.trim() || !email.trim() || !password) {
-        setError("Please fill in all required fields to register.");
+      if (!fullName.trim() || !companyName.trim() || !category || !phone.trim() || !whatsapp.trim() || !email.trim() || !password) {
+        const msg = "All registration fields (Full Name, Company Name, Category, Phone, WhatsApp, Email, Password) are mandatory.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      const mobileRegex = /^[6-9]\d{9}$/;
+      const cleanPhone = phone.trim().replace(/\D/g, "");
+      const cleanWhatsapp = whatsapp.trim().replace(/\D/g, "");
+
+      if (!mobileRegex.test(cleanPhone)) {
+        const msg = "Phone number must start with 6, 7, 8, or 9 and be exactly 10 digits.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!mobileRegex.test(cleanWhatsapp)) {
+        const msg = "WhatsApp number must start with 6, 7, 8, or 9 and be exactly 10 digits.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (password.length < 8) {
+        const msg = "Password must be at least 8 characters long.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      setIsLoading(true);
+
+      // API Client Registration
+      const regRes = await clientAuth.registerClient({
+        ownerName: fullName.trim(),
+        companyName: companyName.trim(),
+        category,
+        phoneNumber: cleanPhone,
+        whatsappNumber: cleanWhatsapp,
+        email: email.trim(),
+        password,
+      });
+
+      if (!regRes.success) {
+        setError(regRes.error || "Registration failed.");
         setIsLoading(false);
         return;
       }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        setIsLoading(false);
-        return;
-      }
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("role", "client");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", fullName.trim());
-      navigate("/client");
+
+      setIsLoading(false);
+      toast.success("Registration successful! Please sign in with your credentials.");
+      setIsRegister(false);
       return;
     }
 
     if (!email || !password) {
       setError("Please enter both email and password.");
-      setIsLoading(false);
+      toast.error("Please enter both email and password.");
       return;
     }
-    localStorage.setItem("isAuthenticated", "true");
-    if (email === "admin@gmail.com" && password === "admin@123") {
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", "Aarav Menon");
-      navigate("/admin");
+
+    setIsLoading(true);
+
+    // API Login
+    const loginRes = await auth.login({ email: email.trim(), password });
+    setIsLoading(false);
+
+    if (loginRes.success) {
+      navigate(loginRes.role === "admin" ? "/admin" : "/client");
     } else {
-      const name = email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      localStorage.setItem("role", "client");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", name || "Client");
-      navigate("/client");
+      setError(loginRes.error || "Invalid email or password.");
+    }
+  };
+
+  // Forgot Password Handlers
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+    setIsForgotLoading(true);
+    const res = await auth.forgotPassword(forgotEmail.trim());
+    setIsForgotLoading(false);
+    if (res.success) {
+      setOtpDigits(["", "", "", "", "", ""]);
+      setOtp("");
+      setForgotStep("verify");
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpDigits.join("");
+    if (code.length < 6) {
+      toast.error("Please enter the full 6-digit OTP.");
+      return;
+    }
+    setIsForgotLoading(true);
+    const res = await auth.verifyOtp(forgotEmail.trim(), code);
+    setIsForgotLoading(false);
+    if (res.success) {
+      setForgotStep("reset");
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+    setIsForgotLoading(true);
+    const res = await auth.resetPassword(forgotEmail.trim(), newPassword);
+    setIsForgotLoading(false);
+    if (res.success) {
+      setIsForgotOpen(false);
+      setForgotStep("request");
+      setForgotEmail("");
+      setOtp("");
+      setNewPassword("");
     }
   };
 
@@ -86,17 +254,14 @@ export default function Login() {
 
   return (
     <div
-      className="relative min-h-screen h-auto lg:h-screen w-full flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden font-sans"
+      className="relative min-h-screen h-auto lg:h-screen w-full flex flex-col lg:flex-row overflow-y-auto font-sans"
       style={{
         backgroundImage: `url(${loginBg})`,
         backgroundSize: "100% 100%",
-
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}
     >
-
-
       {/* ═══════════════════════════════════════════════════════════
           LEFT PANEL  —  background image + headline + illustration
       ═══════════════════════════════════════════════════════════ */}
@@ -150,7 +315,7 @@ export default function Login() {
       {/* ═══════════════════════════════════════════════════════════
           RIGHT PANEL  —  mint bg + white card
       ═══════════════════════════════════════════════════════════ */}
-      <div className="flex-1 min-h-screen lg:min-h-full w-full relative z-10 flex flex-col items-center justify-center lg:justify-start lg:pl-4 xl:pl-10 p-4 sm:p-6 py-8 sm:py-12 lg:py-4 overflow-y-auto lg:overflow-hidden">
+      <div className="flex-1 min-h-screen h-full w-full relative z-10 flex flex-col items-center justify-center lg:justify-start lg:pl-4 xl:pl-10 p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto">
         {/* Mobile logo */}
         <Link to="/" className="lg:hidden mb-6 flex items-center gap-2.5 shrink-0 hover:opacity-90 transition-opacity cursor-pointer">
           <div
@@ -165,12 +330,12 @@ export default function Login() {
           </div>
         </Link>
 
-        {/* ── White card ── */}
+        {/* White Card */}
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 w-full max-w-[380px] sm:max-w-[400px] my-auto"
+          className="relative z-10 w-full max-w-[380px] sm:max-w-[420px] my-auto"
         >
           <div
             className="rounded-3xl overflow-hidden shadow-xl lg:shadow-none"
@@ -179,7 +344,7 @@ export default function Login() {
               border: "1.5px solid rgba(210,235,210,0.85)",
             }}
           >
-            {/* Card header: avatar + Secure Login / Registration */}
+            {/* Card header */}
             <div
               className="relative px-5 pt-4 pb-2 flex items-start justify-between"
               style={{ background: "#f4fbf4" }}
@@ -188,10 +353,9 @@ export default function Login() {
                 src={loginAvatar}
                 alt="Dashboard illustration"
                 className="h-20 w-auto object-contain"
-                style={{ filter: "drop-shadow(0 3px 10px rgba(0,0,0,0.09))" }}
               />
               <div
-                className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full mt-1"
+                className="px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5"
                 style={{
                   background: "#e8f5e9",
                   color: "#2e7d32",
@@ -215,67 +379,120 @@ export default function Login() {
                 {isRegister ? "Sign up to start your marketing campaigns" : "Sign in to access your dashboard"}
               </p>
 
-              {/* Error */}
+              {/* Error Alert */}
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-3 p-3 rounded-xl bg-red-50 text-red-600 text-xs border border-red-200 flex items-center gap-2"
+                  className="mb-3 p-3 rounded-xl bg-red-50 text-red-600 text-xs border border-red-200 flex items-center gap-2 font-medium"
                 >
                   ⚠️ {error}
                 </motion.div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-3">
-                {/* Full Name (Only for Register) */}
+                {/* Registration Fields (Only for Register) */}
                 {isRegister && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <label
-                      htmlFor="fullName"
-                      className="block text-[10px] font-black uppercase tracking-widest mb-1.5"
-                      style={{ color: "#2e7d32" }}
-                    >
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div
-                        className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-                        style={{ color: "#6a9a6a" }}
-                      >
-                        <User className="h-4 w-4" />
-                      </div>
-                      <input
-                        id="fullName"
-                        type="text"
-                        required
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        style={{ ...fieldStyle, padding: "11px 40px 11px 38px" }}
-                        onFocus={(e) => (e.target.style.borderColor = "#2e7d32")}
-                        onBlur={(e) => (e.target.style.borderColor = "#d8ead8")}
-                      />
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
+                        <label className="block text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2e7d32" }}>
+                          Full Name
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style={{ color: "#6a9a6a" }}>
+                            <User className="h-4 w-4" />
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            placeholder="John Doe"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            style={{ ...fieldStyle, padding: "10px 10px 10px 34px" }}
+                          />
+                        </div>
+                      </motion.div>
+
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
+                        <label className="block text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2e7d32" }}>
+                          Company Name
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style={{ color: "#6a9a6a" }}>
+                            <Building2 className="h-4 w-4" />
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Acme Retail"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            style={{ ...fieldStyle, padding: "10px 10px 10px 34px" }}
+                          />
+                        </div>
+                      </motion.div>
                     </div>
-                  </motion.div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2e7d32" }}>
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          maxLength={10}
+                          placeholder="9811122201"
+                          value={phone}
+                          onChange={(e) => handlePhoneInput(e.target.value, setPhone)}
+                          style={{ ...fieldStyle, padding: "10px 10px" }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2e7d32" }}>
+                          WhatsApp Number
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          maxLength={10}
+                          placeholder="9811122201"
+                          value={whatsapp}
+                          onChange={(e) => handlePhoneInput(e.target.value, setWhatsapp)}
+                          style={{ ...fieldStyle, padding: "10px 10px" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2e7d32" }}>
+                        Business Category
+                      </label>
+                      <select
+                        required
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        style={{ ...fieldStyle, padding: "10px 8px" }}
+                        className="cursor-pointer text-xs"
+                      >
+                        <option value="">Select Category</option>
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
                 )}
 
                 {/* Email */}
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-[10px] font-black uppercase tracking-widest mb-1.5"
-                    style={{ color: "#2e7d32" }}
-                  >
+                  <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "#2e7d32" }}>
                     Email Address
                   </label>
                   <div className="relative">
-                    <div
-                      className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-                      style={{ color: "#6a9a6a" }}
-                    >
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style={{ color: "#6a9a6a" }}>
                       <Mail className="h-4 w-4" />
                     </div>
                     <input
@@ -289,35 +506,16 @@ export default function Login() {
                       onFocus={(e) => (e.target.style.borderColor = "#2e7d32")}
                       onBlur={(e) => (e.target.style.borderColor = "#d8ead8")}
                     />
-                    {email && (
-                      <div
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center"
-                        style={{ color: "#2e7d32" }}
-                      >
-                        <div className="h-5 w-5 rounded-full border-2 border-current grid place-items-center">
-                          <svg viewBox="0 0 12 10" className="h-2.5 w-2.5" fill="none">
-                            <path d="M1 5l3 3L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-[10px] font-black uppercase tracking-widest mb-1.5"
-                    style={{ color: "#2e7d32" }}
-                  >
+                  <label htmlFor="password" className="block text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "#2e7d32" }}>
                     Password
                   </label>
                   <div className="relative">
-                    <div
-                      className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-                      style={{ color: "#6a9a6a" }}
-                    >
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style={{ color: "#6a9a6a" }}>
                       <Lock className="h-4 w-4" />
                     </div>
                     <input
@@ -342,32 +540,21 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Remember me + Forgot (only for Login) */}
+                {/* Forgot Password Link */}
                 {!isRegister && (
-                  <div className="flex items-center justify-between pt-0.5">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <div
-                        onClick={() => setRememberMe(!rememberMe)}
-                        className="h-4 w-4 rounded grid place-items-center cursor-pointer shrink-0 transition-all"
-                        style={{
-                          background: rememberMe ? "#2e7d32" : "#fff",
-                          border: "1.5px solid " + (rememberMe ? "#2e7d32" : "#bdd5bd"),
-                        }}
-                      >
-                        {rememberMe && (
-                          <svg viewBox="0 0 10 8" className="h-2.5 w-2.5" fill="none">
-                            <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-[12px]" style={{ color: "#4a6a4a" }}>Remember me</span>
-                    </label>
-                    <span
-                      className="text-[12px] font-semibold cursor-pointer hover:underline"
+                  <div className="flex justify-end pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(email);
+                        setForgotStep("request");
+                        setIsForgotOpen(true);
+                      }}
+                      className="text-[12px] font-semibold cursor-pointer hover:underline border-none bg-transparent"
                       style={{ color: "#2e7d32" }}
                     >
                       Forgot Password?
-                    </span>
+                    </button>
                   </div>
                 )}
 
@@ -415,6 +602,136 @@ export default function Login() {
           </div>
         </motion.div>
       </div>
+
+      {/* FORGOT PASSWORD MODAL OVERLAY */}
+      <AnimatePresence>
+        {isForgotOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-emerald-100 relative"
+            >
+              <button
+                onClick={() => setIsForgotOpen(false)}
+                className="absolute top-5 right-5 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center mb-4">
+                <KeyRound className="h-6 w-6" />
+              </div>
+
+              {forgotStep === "request" && (
+                <form onSubmit={handleSendOtp} className="space-y-4">
+                  <div>
+                    <h3 className="font-display font-black text-xl text-emerald-950">Forgot Password?</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter your email address to receive a 6-digit verification code.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-900 mb-1">Registered Email</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="you@company.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      style={fieldStyle}
+                      className="p-3"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading}
+                    className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md transition disabled:opacity-50"
+                  >
+                    {isForgotLoading ? "Sending OTP..." : "Send OTP"}
+                  </button>
+                </form>
+              )}
+
+              {forgotStep === "verify" && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div>
+                    <h3 className="font-display font-black text-xl text-emerald-950">Enter Verification Code</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      An OTP has been sent to <span className="font-bold text-emerald-800">{forgotEmail}</span>.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-900 mb-2">6-Digit OTP</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {otpDigits.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => {
+                            otpRefs.current[index] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          onPaste={handleOtpPaste}
+                          className="w-full h-12 text-center text-lg font-black rounded-xl border border-emerald-200 bg-emerald-50/50 focus:border-emerald-600 focus:bg-white focus:outline-none transition-all font-mono"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading}
+                    className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md transition disabled:opacity-50"
+                  >
+                    {isForgotLoading ? "Verifying OTP..." : "Verify OTP"}
+                  </button>
+                </form>
+              )}
+
+              {forgotStep === "reset" && (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <h3 className="font-display font-black text-xl text-emerald-950">Set New Password</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter your new account password below.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-900 mb-1">New Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="At least 6 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      style={fieldStyle}
+                      className="p-3"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading}
+                    className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md transition disabled:opacity-50"
+                  >
+                    {isForgotLoading ? "Resetting Password..." : "Reset Password"}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import ScrollToTop from "@/components/ScrollToTop";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Layouts
 import AdminLayout from "@/layouts/AdminLayout";
@@ -28,6 +29,7 @@ import AdminPlans from "@/pages/admin/Plans";
 import AdminProfile from "@/pages/admin/Profile";
 import AdminReports from "@/pages/admin/Reports";
 import AdminTemplates from "@/pages/admin/Templates";
+import AdminFeedbacks from "@/pages/admin/Feedbacks";
 
 // Client Pages
 import ClientDashboard from "@/pages/client/Dashboard";
@@ -37,10 +39,23 @@ import ClientPlans from "@/pages/client/Plans";
 import ClientProfile from "@/pages/client/Profile";
 import ClientReports from "@/pages/client/Reports";
 import ClientTemplates from "@/pages/client/Templates";
+import ClientFeedback from "@/pages/client/Feedback";
+
+import { Toaster as HotToaster } from "react-hot-toast";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export default function App() {
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
+      <HotToaster position="top-right" reverseOrder={false} />
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
@@ -64,6 +79,7 @@ export default function App() {
             <Route path="profile" element={<ClientProfile />} />
             <Route path="reports" element={<ClientReports />} />
             <Route path="templates" element={<ClientTemplates />} />
+            <Route path="feedback" element={<ClientFeedback />} />
           </Route>
 
           {/* Admin Routes */}
@@ -77,6 +93,7 @@ export default function App() {
             <Route path="profile" element={<AdminProfile />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="templates" element={<AdminTemplates />} />
+            <Route path="feedbacks" element={<AdminFeedbacks />} />
           </Route>
 
           {/* Fallback */}
@@ -84,6 +101,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       <Toaster position="bottom-right" richColors />
-    </>
+    </QueryClientProvider>
   );
 }

@@ -1,159 +1,130 @@
-import { Mail, Phone, Award, Edit3, Check, X } from "lucide-react";
-import { useState } from "react";
+import { Mail, Shield, UserCheck, Key, Server } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Blob } from "@/components/site/Decor";
-import { motion, AnimatePresence } from "motion/react";
 
 export default function AdminProfile() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: "Aarav Menon",
-    email: "aarav@caryanam.in",
-    phone: "+91 98765 43210",
+  const [adminData, setAdminData] = useState({
+    id: "1",
+    name: "Administrator",
+    email: "admin@caryanam.com",
+    role: "ADMIN",
+    token: "",
   });
 
-  const [editForm, setEditForm] = useState({ ...profileData });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("adminData");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const item = parsed[parsed.length - 1];
+          let derivedName = "Administrator";
+          if (item.name || item.ownerName) {
+            derivedName = item.name || item.ownerName;
+          } else if (item.email) {
+            const prefix = item.email.split("@")[0];
+            derivedName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+          }
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileData({ ...editForm });
-    setIsEditing(false);
-  };
+          setAdminData({
+            id: item.id || item.decoded?.sub || "1",
+            name: derivedName,
+            email: item.email || "admin@caryanam.com",
+            role: (item.role || item.decoded?.role || "ADMIN").toUpperCase(),
+            token: item.token || "",
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore error
+    }
+  }, []);
 
-  const handleCancel = () => {
-    setEditForm({ ...profileData });
-    setIsEditing(false);
-  };
+  const initials = adminData.name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="space-y-6 font-sans">
+      {/* Cover Header */}
       <div className="rounded-[36px] h-48 bg-gradient-brand relative overflow-hidden shadow-glow">
         <Blob className="absolute -right-10 -top-10 w-72 h-72 text-white/20" />
         <Blob className="absolute -left-10 -bottom-16 w-60 h-60 text-emerald-deep/25" />
       </div>
+
+      {/* Profile Info Header */}
       <div className="-mt-24 relative">
         <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-wrap items-end gap-6">
-          <img src="https://i.pravatar.cc/200?img=15" alt="" className="h-32 w-32 rounded-3xl border-4 border-white shadow-glow -mt-16 object-cover" />
+          <div className="h-32 w-32 rounded-3xl bg-gradient-sun text-emerald-deep border-4 border-white shadow-glow grid place-items-center font-display font-black text-4xl -mt-16">
+            {initials || "AD"}
+          </div>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display font-black text-3xl md:text-4xl text-emerald-deep">{profileData.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground font-semibold">
-              <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-brand" /> {profileData.email}</span>
-              <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-brand" /> {profileData.phone}</span>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display font-black text-3xl md:text-4xl text-emerald-deep capitalize">{adminData.name}</h1>
+              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-wider shrink-0 border border-emerald-200">
+                {adminData.role}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground font-semibold">
+              <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4 text-brand" /> {adminData.email}</span>
+              <span className="inline-flex items-center gap-1.5"><Shield className="h-4 w-4 text-brand" /> Super Admin Access</span>
             </div>
           </div>
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow inline-flex items-center gap-2 hover:shadow-lg transition cursor-pointer"
-            >
-              <Edit3 className="h-4 w-4" /> Edit Profile
-            </button>
-          )}
         </div>
       </div>
 
+      {/* Profile Details Cards */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <AnimatePresence mode="wait">
-            {isEditing ? (
-              <motion.div
-                key="edit-form"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="rounded-[28px] bg-white p-6 md:p-8 shadow-float border border-white/60"
-              >
-                <h3 className="font-display font-black text-xl text-emerald-deep mb-6">Edit Profile Information</h3>
-                <form onSubmit={handleSave} className="space-y-5">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-2 ml-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
-                      required
-                    />
-                  </div>
+          <div className="rounded-[28px] bg-white p-6 md:p-8 shadow-float">
+            <h3 className="font-display font-black text-xl text-emerald-deep mb-6">Administrator Account Details</h3>
+            <div className="grid md:grid-cols-2 gap-5">
+              {[
+                { l: "Administrator Name", v: adminData.name, i: UserCheck },
+                { l: "Admin Email", v: adminData.email, i: Mail },
+                { l: "Assigned Role", v: adminData.role, i: Shield },
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-2 ml-1">Email Address</label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
-                      required
-                    />
+              ].map((f) => (
+                <div key={f.l} className="rounded-2xl bg-cream p-5 border border-emerald-100/60">
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{f.l}</div>
+                  <div className="mt-1.5 font-black text-emerald-deep text-base flex items-center gap-2.5">
+                    <f.i className="h-4 w-4 text-brand shrink-0" />
+                    <span>{f.v}</span>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-2 ml-1">Phone Number</label>
-                    <input
-                      type="text"
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-cream">
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition flex items-center gap-2 cursor-pointer"
-                    >
-                      <X className="h-4 w-4" /> Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition flex items-center gap-2 cursor-pointer"
-                    >
-                      <Check className="h-4 w-4" /> Save Changes
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="profile-view"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="rounded-[28px] bg-white p-6 md:p-8 shadow-float"
-              >
-                <h3 className="font-display font-black text-xl text-emerald-deep mb-4">Profile Information</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    { l: "Full Name", v: profileData.name },
-                    { l: "Email", v: profileData.email, i: Mail },
-                    { l: "Phone Number", v: profileData.phone, i: Phone },
-                  ].map((f) => (
-                    <div key={f.l} className="rounded-2xl bg-cream p-4">
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{f.l}</div>
-                      <div className="mt-1 font-black text-emerald-deep flex items-center gap-2">
-                        {f.i && <f.i className="h-4 w-4 text-brand" />}
-                        {f.v}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="space-y-4">
-          <div className="rounded-[28px] bg-emerald-deep text-white p-6 shadow-float">
-            <div className="text-xs font-bold uppercase tracking-widest opacity-70">Certifications</div>
-            <div className="mt-3 space-y-2">
-              {["Meta WhatsApp API Partner", "Meta Business Verified", "ISO 27001 Info Security"].map((c) => (
-                <div key={c} className="flex items-center gap-2 text-sm">
-                  <Award className="h-4 w-4 text-sunny" /> {c}
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* System & Access Status Sidebar Card */}
+        <div className="space-y-5">
+          <div className="rounded-[28px] bg-emerald-deep text-white p-6 shadow-float relative overflow-hidden">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-2xl bg-white/10 grid place-items-center text-sunny">
+                <Server className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="font-display font-black text-white text-base">Portal Status</h4>
+                <p className="text-xs text-white/60">Active Administrator Session</p>
+              </div>
+            </div>
+            <div className="space-y-3 pt-2 border-t border-white/10 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-white/70">Session Status:</span>
+                <span className="font-bold text-emerald-300">● Active</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/70">Security Level:</span>
+                <span className="font-bold text-sunny">Highest (Full Rights)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/70">Environment:</span>
+                <span className="font-bold text-white">Production</span>
+              </div>
             </div>
           </div>
         </div>

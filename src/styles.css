@@ -188,3 +188,32 @@
 @utility bg-gradient-sun { background: var(--gradient-sun); }
 @utility bg-gradient-teal { background: var(--gradient-teal); }
 @utility bg-gradient-cream { background: var(--gradient-cream); }
+
+/* Infinite Scrolling Marquee Animations */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 40s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marquee-right 40s linear infinite;
+}
+
+.marquee-container:hover .animate-marquee-left,
+.marquee-container:hover .animate-marquee-right {
+  animation-play-state: paused;
+}
+
