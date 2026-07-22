@@ -54,8 +54,30 @@ export default function ClientCampaigns() {
       </div>
 
       {isLoading ? (
-        <div className="min-h-[200px] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand" />
+        <div className="grid gap-4 animate-pulse">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/30 space-y-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex gap-4 items-center">
+                  <div className="h-12 w-12 rounded-2xl bg-cream-dark/30 shrink-0" />
+                  <div className="space-y-2">
+                    <div className="h-5 bg-cream-dark/30 rounded-lg w-48" />
+                    <div className="h-3.5 bg-cream-dark/30 rounded-lg w-24" />
+                  </div>
+                </div>
+                <div className="h-7 bg-cream-dark/30 rounded-full w-20" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((m) => (
+                  <div key={m} className="p-3 rounded-2xl bg-cream space-y-2">
+                    <div className="h-3 bg-cream-dark/30 rounded-lg w-12" />
+                    <div className="h-6 bg-cream-dark/30 rounded-lg w-16" />
+                  </div>
+                ))}
+              </div>
+              <div className="h-2 rounded-full bg-cream animate-pulse" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid gap-4">

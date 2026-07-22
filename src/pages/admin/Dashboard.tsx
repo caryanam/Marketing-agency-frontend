@@ -3,10 +3,10 @@ import { motion } from "motion/react";
 import { TrendingUp, MessageCircle, Users, Send, ArrowUpRight } from "lucide-react";
 import { Counter } from "@/components/site/Counter";
 import { Blob } from "@/components/site/Decor";
-import { useAdminAnalytics } from "@/hooks/admin/useAdminSubscription";
+import { useAdminAnalytics, useAdminSubscriptions } from "@/hooks/admin/useAdminSubscription";
 import { useAdminClients } from "@/hooks/admin/useAdminClients";
 import { useAdminCampaigns } from "@/hooks/admin/useAdminCampaign";
-import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip } from "recharts";
+import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 
 const chartData = [
   { d: "Mon", sent: 4200, replied: 620 },
@@ -19,23 +19,26 @@ const chartData = [
 ];
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
-  USED_CAR_DEALERS: "Used Cars",
+  USED_CAR_DEALERS: "Used Car Dealers",
   CAR_SHOWROOMS: "Car Showrooms",
-  HOSPITALS: "Healthcare",
+  HOSPITALS: "Hospitals",
   GARAGES: "Garages",
   REAL_ESTATE: "Real Estate",
-  INSURANCE_AGENTS: "Insurance",
-  FINANCE_COMPANIES: "Finance",
-  SCHOOLS_AND_COLLEGES: "Education",
-  HOTELS_AND_RESTAURANTS: "Hospitality",
+  INSURANCE_AGENTS: "Insurance Agents",
+  FINANCE_COMPANIES: "Finance Companies",
+  SCHOOLS_AND_COLLEGES: "Schools And Colleges",
+  HOTELS_AND_RESTAURANTS: "Hotels And Restaurants",
 };
+
+const COLORS = ["#064e3b", "#10b981", "#f3b83c", "#14b8a6", "#3b82f6"];
 
 export default function AdminDashboard() {
   const { data: analytics, isLoading: isAnalyticsLoading } = useAdminAnalytics();
   const { clients, isLoading: isClientsLoading } = useAdminClients();
   const { data: campaigns, isLoading: isCampaignsLoading } = useAdminCampaigns();
+  const { data: subscriptions = [], isLoading: isSubsLoading } = useAdminSubscriptions();
 
-  if (isAnalyticsLoading || isClientsLoading || isCampaignsLoading) {
+  if (isAnalyticsLoading || isClientsLoading || isCampaignsLoading || isSubsLoading) {
     return (
       <div className="space-y-6 animate-pulse">
         {/* Banner Skeleton */}
@@ -46,8 +49,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Metrics Grid Skeleton */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="rounded-[28px] bg-white border border-cream p-6 h-36 flex flex-col justify-between shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="h-11 w-11 rounded-2xl bg-cream" />
@@ -71,46 +74,65 @@ export default function AdminDashboard() {
         </div>
 
         {/* Bottom Row Skeletons */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="rounded-[28px] bg-white border border-cream p-6 h-[340px] shadow-xs">
-              <div className="flex justify-between items-center mb-6">
-                <div className="h-5 w-32 bg-cream rounded-md" />
-                <div className="h-4 w-16 bg-cream rounded-md" />
-              </div>
-              <div className="space-y-3.5">
-                {[...Array(3)].map((_, j) => (
-                  <div key={j} className="flex items-center gap-3 p-3 rounded-2xl border border-cream/20">
-                    <div className="h-12 w-12 rounded-2xl bg-cream shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-28 bg-cream rounded-md" />
-                      <div className="h-3 w-20 bg-cream/70 rounded-md" />
-                    </div>
-                    <div className="space-y-2 text-right">
-                      <div className="h-4 w-16 bg-cream rounded-md ml-auto" />
-                      <div className="h-3 w-24 bg-cream/70 rounded-md ml-auto" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 rounded-[28px] bg-white border border-cream p-6 h-[340px] shadow-xs">
+            <div className="flex justify-between items-center mb-6">
+              <div className="h-5 w-32 bg-cream rounded-md" />
+              <div className="h-4 w-16 bg-cream rounded-md" />
             </div>
-          ))}
+            <div className="space-y-3.5">
+              {[...Array(3)].map((_, j) => (
+                <div key={j} className="flex items-center gap-3 p-3 rounded-2xl border border-cream/20">
+                  <div className="h-12 w-12 rounded-2xl bg-cream shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-28 bg-cream rounded-md" />
+                    <div className="h-3 w-20 bg-cream/70 rounded-md" />
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <div className="h-4 w-16 bg-cream rounded-md ml-auto" />
+                    <div className="h-3 w-24 bg-cream/70 rounded-md ml-auto" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[28px] bg-white border border-cream p-6 h-[340px] shadow-xs">
+            <div className="flex justify-between items-center mb-6">
+              <div className="h-5 w-24 bg-cream rounded-md" />
+            </div>
+            <div className="h-48 w-full bg-cream/40 rounded-2xl mt-4" />
+          </div>
         </div>
       </div>
     );
   }
 
   const totalCount = analytics?.totalMessagesSent || 0;
-  const activeSubs = analytics?.totalActiveSubscriptions || 0;
   const totalRevenue = analytics?.totalRevenue || 0;
   const totalCampaigns = analytics?.totalCampaignsRun || 0;
+  const pendingPayments = analytics?.pendingPayments || 0;
+  const expiredSubs = analytics?.totalExpiredSubscriptions || 0;
 
   const stats = [
-    { i: MessageCircle, l: "Messages Sent", n: totalCount, s: "", tone: "bg-white text-emerald-deep", trend: "Volume" },
-    { i: TrendingUp, l: "Platform Revenue", n: totalRevenue, s: "", tone: "bg-gradient-sun text-emerald-deep", trend: "Revenue" },
-    { i: Users, l: "Active Subscriptions", n: activeSubs, s: "", tone: "bg-teal-deep text-white", trend: "Clients" },
+    { i: TrendingUp, l: "Platform Revenue", n: totalRevenue, s: "", tone: "bg-gradient-brand text-white", trend: "Revenue" },
+    { i: MessageCircle, l: "Messages Sent", n: totalCount, s: "", tone: "bg-white text-emerald-deep border border-cream shadow-sm", trend: "Volume" },
     { i: Send, l: "Campaigns Run", n: totalCampaigns, s: "", tone: "bg-emerald-deep text-white", trend: "Live" },
+    { i: Users, l: "Pending Payments", n: pendingPayments, s: "", tone: "bg-gradient-sun text-emerald-deep", trend: "Review" },
+    { i: Users, l: "Expired Subscriptions", n: expiredSubs, s: "", tone: "bg-cream text-emerald-deep border border-emerald-100", trend: "Past" },
   ];
+
+  // Group active subscriptions by plan for chart representation
+  const planCounts: Record<string, number> = {};
+  subscriptions.forEach((sub) => {
+    if (sub.subscriptionStatus === "ACTIVE") {
+      const name = sub.plan?.planName || "Unknown Tier";
+      planCounts[name] = (planCounts[name] || 0) + 1;
+    }
+  });
+  const planChartData = Object.entries(planCounts).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   return (
     <div className="space-y-6">
@@ -118,7 +140,7 @@ export default function AdminDashboard() {
         <Blob className="absolute -right-10 -top-10 w-72 h-72 text-white/15" />
         <Blob className="absolute -left-10 -bottom-16 w-72 h-72 text-sunny/30" />
         <div className="relative">
-          <div className="text-white/80 text-xs uppercase tracking-widest font-bold">Welcome back, Aarav</div>
+          <div className="text-white/80 text-xs uppercase tracking-widest font-bold">Welcome back, Admin</div>
           <h1 className="mt-2 font-display font-black text-3xl md:text-4xl">Platform Operations Dashboard</h1>
           <p className="mt-2 text-white/80 max-w-xl">
             Monitor real-time WhatsApp revenue, campaigns lifecycle operations, and payment receipts moderation.
@@ -126,23 +148,24 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5">
         {stats.map((k, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className={`rounded-[28px] p-6 shadow-float ${k.tone}`}>
+          <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className={`rounded-[28px] p-5 shadow-float ${k.tone} flex flex-col justify-between`}>
             <div className="flex items-center justify-between">
-              <div className="h-11 w-11 rounded-2xl bg-white/20 backdrop-blur grid place-items-center"><k.i className="h-5 w-5" /></div>
-              <span className="text-xs font-bold px-2 py-1 rounded-full bg-white/20">{k.trend}</span>
+              <div className="h-9 w-9 rounded-xl bg-white/20 backdrop-blur grid place-items-center"><k.i className="h-4.5 w-4.5" /></div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">{k.trend}</span>
             </div>
-            <div className="mt-5 font-display font-black text-3xl">
+            <div className="mt-4 font-display font-black text-2xl">
               {k.l.includes("Revenue") ? "₹" : ""}
               <Counter to={k.n} suffix={k.s} />
             </div>
-            <div className="text-xs opacity-70 mt-1 font-semibold">{k.l}</div>
+            <div className="text-[10px] opacity-70 mt-1 font-semibold">{k.l}</div>
           </motion.div>
         ))}
       </div>
 
       <div className="w-full">
+        {/* Weekly Chart */}
         <div className="rounded-[28px] bg-white p-6 shadow-float">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -168,23 +191,26 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-[28px] bg-white p-6 shadow-float">
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Latest Clients */}
+        <div className="lg:col-span-2 rounded-[28px] bg-white p-6 shadow-float">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-black text-xl text-emerald-deep">Top Clients</h3>
+            <h3 className="font-display font-black text-xl text-emerald-deep">Latest Clients</h3>
             <Link to="/admin/clients" className="text-sm font-bold text-brand inline-flex items-center gap-1">See all <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
           <div className="space-y-3">
             {clients.slice(0, 4).map((c) => (
-              <Link key={c.id} to={`/admin/clients/${c.id}`} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-cream transition">
-                <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white flex items-center justify-center text-xl font-bold uppercase shadow-float shrink-0">
-                  {c.companyName.charAt(0)}
+              <Link key={c.id} to={`/admin/clients/${c.id}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl hover:bg-cream transition border border-cream/20 bg-cream/5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white flex items-center justify-center text-xl font-bold uppercase shadow-float shrink-0">
+                    {c.companyName.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-emerald-deep truncate">{c.companyName}</div>
+                    <div className="text-xs text-muted-foreground">{REVERSE_CATEGORY_MAP[c.category] || c.category}</div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-emerald-deep truncate">{c.companyName}</div>
-                  <div className="text-xs text-muted-foreground">{REVERSE_CATEGORY_MAP[c.category] || c.category}</div>
-                </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right border-t sm:border-t-0 border-cream/20 pt-2 sm:pt-0 pl-15 sm:pl-0">
                   <div className="font-black text-emerald-deep text-sm truncate">{c.ownerName}</div>
                   <div className="text-[10px] text-brand font-semibold truncate">{c.email}</div>
                 </div>
@@ -196,40 +222,35 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 shadow-float">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-black text-xl text-emerald-deep">Live Campaigns</h3>
-            <Link to="/admin/campaigns" className="text-sm font-bold text-brand inline-flex items-center gap-1">See all <ArrowUpRight className="h-4 w-4" /></Link>
+        {/* Subscription Plan Distribution Chart */}
+        <div className="rounded-[28px] bg-white p-6 shadow-float flex flex-col justify-between">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest text-brand">Tiers overview</div>
+            <h3 className="font-display font-black text-xl text-emerald-deep">Active Subscriptions</h3>
           </div>
-          <div className="space-y-3">
-            {campaigns?.slice(0, 4).map((c) => {
-              const clientObj = clients.find(cl => cl.id === c.clientId);
-              const companyName = clientObj ? clientObj.companyName : `Client #${c.clientId}`;
-
-              return (
-                <div key={c.id} className="p-4 rounded-2xl bg-cream flex flex-col justify-between">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-emerald-deep text-sm">{c.campaignName}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{companyName}</div>
-                    </div>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                      c.campaignStatus === "RUNNING" ? "bg-brand text-white" : 
-                      c.campaignStatus === "CREATED" ? "bg-sunny text-emerald-deep" : "bg-teal-deep text-white"
-                    }`}>{c.campaignStatus}</span>
-                  </div>
-                  <div className="mt-3 h-1.5 rounded-full bg-white overflow-hidden">
-                    <div className="h-full bg-gradient-brand" style={{ width: c.campaignStatus === "RUNNING" ? "65%" : c.campaignStatus === "COMPLETED" ? "100%" : "0%" }} />
-                  </div>
-                  <div className="mt-2 flex justify-between text-[11px] text-muted-foreground font-semibold">
-                    <span>{c.messagesSent.toLocaleString()} messages sent</span>
-                    <span className="font-bold text-emerald-deep">Status: {c.campaignStatus}</span>
-                  </div>
-                </div>
-              );
-            })}
-            {(!campaigns || campaigns.length === 0) && (
-              <p className="text-sm text-muted-foreground italic font-medium p-4 text-center">No campaigns created yet.</p>
+          <div className="h-56 relative flex items-center justify-center">
+            {planChartData.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic font-medium">No active subscriptions to represent.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={planChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {planChartData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} subscriber(s)`, "Count"]} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 11, fontWeight: "bold" }} />
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>

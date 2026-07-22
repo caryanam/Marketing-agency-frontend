@@ -8,17 +8,18 @@ import toast from "react-hot-toast";
 import { useAdminClients } from "@/hooks/admin/useAdminClients";
 import { useClientAuth } from "@/hooks/auth/useClientAuth";
 
-const CATS = ["All", "Used Cars", "Healthcare", "Real Estate", "Garages", "Insurance", "Education", "Hospitality", "Finance"];
+const CATS = ["All", "Used Car Dealers", "Car Showrooms", "Hospitals", "Garages", "Real Estate", "Insurance Agents", "Finance Companies", "Schools And Colleges", "Hotels And Restaurants"];
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
-  USED_CAR_DEALERS: "Used Cars",
-  HOSPITALS: "Healthcare",
-  REAL_ESTATE: "Real Estate",
+  USED_CAR_DEALERS: "Used Car Dealers",
+  CAR_SHOWROOMS: "Car Showrooms",
+  HOSPITALS: "Hospitals",
   GARAGES: "Garages",
-  INSURANCE_AGENTS: "Insurance",
-  SCHOOLS_AND_COLLEGES: "Education",
-  HOTELS_AND_RESTAURANTS: "Hospitality",
-  FINANCE_COMPANIES: "Finance",
+  REAL_ESTATE: "Real Estate",
+  INSURANCE_AGENTS: "Insurance Agents",
+  FINANCE_COMPANIES: "Finance Companies",
+  SCHOOLS_AND_COLLEGES: "Schools And Colleges",
+  HOTELS_AND_RESTAURANTS: "Hotels And Restaurants",
 };
 
 const TONES = [
@@ -32,14 +33,15 @@ const TONES = [
 ];
 
 const CATEGORY_EMOJIS: Record<string, string> = {
-  "Used Cars": "🚗",
-  "Healthcare": "🩺",
+  "Used Car Dealers": "🚗",
+  "Car Showrooms": "🏎️",
+  "Hospitals": "🩺",
   "Real Estate": "🏡",
   "Garages": "🔧",
-  "Insurance": "🛡️",
-  "Education": "🎓",
-  "Hospitality": "🏨",
-  "Finance": "💰"
+  "Insurance Agents": "🛡️",
+  "Finance Companies": "💰",
+  "Schools And Colleges": "🎓",
+  "Hotels And Restaurants": "🏨",
 };
 
 export default function AdminClients() {
@@ -353,11 +355,11 @@ export default function AdminClients() {
       {isLoading ? (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="rounded-[28px] bg-white p-6 shadow-float animate-pulse space-y-4">
-              <div className="h-14 w-14 rounded-2xl bg-slate-200" />
-              <div className="h-6 w-3/4 bg-slate-200 rounded-lg" />
-              <div className="h-4 w-1/2 bg-slate-200 rounded-lg" />
-              <div className="h-16 bg-slate-100 rounded-2xl" />
+            <div key={n} className="rounded-[28px] bg-white p-6 shadow-float animate-pulse space-y-4 border border-cream/50">
+              <div className="h-14 w-14 rounded-2xl bg-cream-dark/30" />
+              <div className="h-6 w-3/4 bg-cream-dark/30 rounded-lg" />
+              <div className="h-4 w-1/2 bg-cream-dark/30 rounded-lg" />
+              <div className="h-16 bg-cream/70 rounded-2xl" />
             </div>
           ))}
         </div>

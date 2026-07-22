@@ -38,11 +38,11 @@ export default function AdminEnquiries() {
         <div className="grid gap-4">
           {[1, 2, 3].map((n) => (
             <div key={n} className="rounded-[24px] bg-white p-6 shadow-float animate-pulse flex gap-6 items-start">
-              <div className="h-14 w-14 rounded-2xl bg-slate-200 shrink-0" />
+              <div className="h-14 w-14 rounded-2xl bg-cream-dark/30 shrink-0" />
               <div className="flex-1 space-y-3">
-                <div className="h-5 w-48 bg-slate-200 rounded-md" />
-                <div className="h-4 w-full max-w-md bg-slate-200 rounded-md" />
-                <div className="h-4 w-64 bg-slate-200 rounded-md" />
+                <div className="h-5 w-48 bg-cream-dark/30 rounded-md" />
+                <div className="h-4 w-full max-w-md bg-cream-dark/30 rounded-md" />
+                <div className="h-4 w-64 bg-cream-dark/30 rounded-md" />
               </div>
             </div>
           ))}

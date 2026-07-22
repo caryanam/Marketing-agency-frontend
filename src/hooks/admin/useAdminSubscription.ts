@@ -42,7 +42,7 @@ export interface ClientSubscriptionItem {
   plan: SubscriptionPlanItem;
   paymentStatus: "PENDING" | "APPROVED" | "REJECTED";
   subscriptionStatus: "ACTIVE" | "EXPIRED" | "UPGRADED";
-  paymentReference: string;
+  paymentReference?: string;
   amount: number;
   purchaseDate: string;
   approvedDate?: string;
@@ -56,7 +56,7 @@ export interface PaymentHistoryItem {
   clientSubscriptionId: number;
   amount: number;
   paymentMethod: string;
-  paymentReference: string;
+  paymentReference?: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   remarks?: string;
   createdAt: string;

@@ -145,7 +145,7 @@ export default function ClientDashboard() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
         {[
           { i: MessageCircle, l: "Messages Dispatched", n: messagesUsed, s: "", tone: "bg-white text-emerald-deep", trend: "Volume" },
           { i: CheckCheck, l: "Remaining Allocation", n: remainingMessages, s: "", tone: "bg-gradient-sun text-emerald-deep", trend: "Left" },
@@ -174,9 +174,10 @@ export default function ClientDashboard() {
         ))}
       </div>
 
-      {/* Graphs */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/30">
+      {/* Graphs - Stacked in separate rows */}
+      <div className="space-y-6">
+        {/* Row 1: Messaging Usage Chart */}
+        <div className="rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/30">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-xs font-bold uppercase tracking-widest text-brand">Usage chart</div>
@@ -205,12 +206,13 @@ export default function ClientDashboard() {
           </div>
         </div>
 
+        {/* Row 2: Delivery Quality Funnel */}
         <div className="rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/30">
           <div className="text-xs font-bold uppercase tracking-widest text-brand">Delivery Quality</div>
           <h3 className="font-display font-black text-xl text-emerald-deep mb-4">Quality funnel</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={engagementData} layout="vertical" margin={{ left: 8 }}>
+              <BarChart data={engagementData} layout="vertical" margin={{ left: 8, right: 24 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eee" />
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} width={70} />
@@ -236,11 +238,10 @@ export default function ClientDashboard() {
               <div className="flex items-center justify-between">
                 <div className="font-bold text-emerald-deep text-sm truncate max-w-[120px]">{c.campaignName}</div>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                    c.campaignStatus === "RUNNING"
-                      ? "bg-brand text-white"
-                      : "bg-sunny text-emerald-deep"
-                  }`}
+                  className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${c.campaignStatus === "RUNNING"
+                    ? "bg-brand text-white"
+                    : "bg-sunny text-emerald-deep"
+                    }`}
                 >
                   {c.campaignStatus}
                 </span>

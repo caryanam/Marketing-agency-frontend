@@ -32,27 +32,27 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
           : ""
       }`}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="h-11 w-11 rounded-2xl bg-gradient-brand grid place-items-center shadow-glow group-hover:rotate-6 transition-transform">
-            <MessageCircle className="h-6 w-6 text-white" strokeWidth={2.5} />
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <Link to="/" className="flex items-center gap-2 group shrink-0">
+          <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-gradient-brand grid place-items-center shadow-glow group-hover:rotate-6 transition-transform">
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" strokeWidth={2.5} />
           </div>
           <div className="leading-tight">
-            <div className={`font-display font-black text-xl ${darkTheme ? "text-white" : "text-emerald-deep"}`}>
+            <div className={`font-display font-black text-lg sm:text-xl ${darkTheme ? "text-white" : "text-emerald-deep"}`}>
               Caryanam
             </div>
-            <div className={`text-[10px] uppercase tracking-[0.2em] ${darkTheme ? "text-white/60" : "text-muted-foreground"}`}>
+            <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] ${darkTheme ? "text-white/60" : "text-muted-foreground"}`}>
               Marketing Agency
             </div>
           </div>
         </Link>
 
-        <div className={`hidden lg:flex items-center gap-1 rounded-full px-2 py-2 ${darkTheme ? "bg-white/10 backdrop-blur border border-white/10" : "glass-card"}`}>
+        <div className={`hidden lg:flex items-center gap-0.5 xl:gap-1 rounded-full px-1.5 py-1.5 xl:px-2 xl:py-2 ${darkTheme ? "bg-white/10 backdrop-blur border border-white/10" : "glass-card"}`}>
           {nav.map((n) => (
             <Link
               key={n.label}
               to={n.to}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              className={`px-2.5 xl:px-4 py-1.5 xl:py-2 rounded-full text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                 darkTheme
                   ? "text-white/80 hover:text-white hover:bg-white/15"
                   : "text-foreground/70 hover:text-emerald-deep hover:bg-white"
@@ -63,10 +63,10 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
           ))}
         </div>
 
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
           <Link
             to="/login"
-            className={`text-sm font-semibold transition ${
+            className={`text-xs xl:text-sm font-semibold transition whitespace-nowrap ${
               darkTheme ? "text-white/90 hover:text-sunny" : "text-emerald-deep hover:text-brand"
             }`}
           >
@@ -74,7 +74,7 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
           </Link>
           <Link
             to="/contact"
-            className="px-5 py-3 rounded-full bg-gradient-sun text-emerald-deep font-bold text-sm shadow-float hover:shadow-glow hover:-translate-y-0.5 transition-all"
+            className="px-3.5 py-2.5 xl:px-5 xl:py-3 rounded-full bg-gradient-sun text-emerald-deep font-bold text-xs xl:text-sm shadow-float hover:shadow-glow hover:-translate-y-0.5 transition-all whitespace-nowrap"
           >
             Start Free Demo
           </Link>
@@ -92,7 +92,7 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`lg:hidden mx-4 mb-4 rounded-3xl p-6 flex flex-col gap-2 ${
+          className={`lg:hidden mx-4 mb-4 rounded-3xl p-6 flex flex-col gap-2 max-h-[calc(100vh-5rem)] overflow-y-auto ${
             darkTheme ? "bg-emerald-deep/95 backdrop-blur border border-white/10 text-white" : "glass-card"
           }`}
         >

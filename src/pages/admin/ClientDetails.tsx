@@ -7,14 +7,39 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip } from "recharts";
 import { Blob } from "@/components/site/Decor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-import { useAdminClientDetails } from "@/hooks/admin/useAdminClients";
+import { useAdminClientDetails, useAdminClientUsage, useAdminClientCampaigns, useAdminClientSubscription } from "@/hooks/admin/useAdminClients";
+import { useCreateCampaign } from "@/hooks/admin/useAdminCampaign";
+
+const REVERSE_CATEGORY_MAP: Record<string, string> = {
+  USED_CAR_DEALERS: "Used Car Dealers",
+  CAR_SHOWROOMS: "Car Showrooms",
+  HOSPITALS: "Hospitals",
+  GARAGES: "Garages",
+  REAL_ESTATE: "Real Estate",
+  INSURANCE_AGENTS: "Insurance Agents",
+  FINANCE_COMPANIES: "Finance Companies",
+  SCHOOLS_AND_COLLEGES: "Schools And Colleges",
+  HOTELS_AND_RESTAURANTS: "Hotels And Restaurants",
+};
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  USED_CAR_DEALERS: "🚗",
+  CAR_SHOWROOMS: "🏎️",
+  HOSPITALS: "🩺",
+  GARAGES: "🔧",
+  REAL_ESTATE: "🏡",
+  INSURANCE_AGENTS: "🛡️",
+  FINANCE_COMPANIES: "💰",
+  SCHOOLS_AND_COLLEGES: "🎓",
+  HOTELS_AND_RESTAURANTS: "🏨",
+};
 
 const perfData = [
   { d: "W1", v: 2200 }, { d: "W2", v: 3200 }, { d: "W3", v: 4100 }, { d: "W4", v: 5800 },
   { d: "W5", v: 5100 }, { d: "W6", v: 7200 }, { d: "W7", v: 8400 }, { d: "W8", v: 9600 },
 ];
 
-const tabs = ["Overview", "Contacts", "Campaigns", "Notes", "Timeline", "Plans"];
+const tabs = ["Overview", "Contacts", "Campaigns", "Plans"];
 
 const INITIAL_CONTACTS = [
   { name: "Ananya Sharma", phone: "+91 98100 12011", status: "Active" },
@@ -36,6 +61,15 @@ export default function AdminClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { client: apiData, isLoading: isApiLoading } = useAdminClientDetails(id || "");
+  const { data: usageData, isLoading: isUsageLoading } = useAdminClientUsage(id || "");
+  const { data: campaignsData, isLoading: isCampaignsLoading, refetch: refetchCampaigns } = useAdminClientCampaigns(id || "");
+  const { data: activeSub, isLoading: isActiveSubLoading, refetch: refetchSub } = useAdminClientSubscription(id || "");
+  
+  const createCampaignMutation = useCreateCampaign();
+
+  const msgPercent = usageData && usageData.totalMessagesAllowed ? Math.min(Math.round((usageData.messagesUsed / usageData.totalMessagesAllowed) * 100), 100) : 0;
+  const campPercent = usageData && usageData.totalCampaignsAllowed ? Math.min(Math.round((usageData.campaignsUsed / usageData.totalCampaignsAllowed) * 100), 100) : 0;
+
   const [client, setClient] = useState<any>(null);
   const [tab, setTab] = useState("Overview");
 
@@ -73,16 +107,16 @@ export default function AdminClientDetails() {
         phone: apiData.phoneNumber,
         whatsapp: apiData.whatsappNumber || apiData.phoneNumber,
         email: apiData.email,
-        revenue: 15000,
-        campaigns: 4,
-        status: "active",
-        lastActivity: "Active now",
-        plan: "Growth",
-        billingBasis: "monthly",
+        revenue: 0,
+        campaigns: 0,
+        status: activeSub?.subscriptionStatus === "ACTIVE" ? "active" : "inactive",
+        lastActivity: activeSub?.subscriptionStatus ? `Subscription: ${activeSub.subscriptionStatus}` : "No Active Subscription",
+        plan: activeSub?.plan?.planName || "No Plan",
+        billingBasis: activeSub?.plan?.planType || "monthly",
       });
-      setEditStatus("active");
-      setEditPlan("Growth");
-      setEditBillingBasis("monthly");
+      setEditStatus(activeSub?.subscriptionStatus === "ACTIVE" ? "active" : "inactive");
+      setEditPlan(activeSub?.plan?.planName || "Growth");
+      setEditBillingBasis(activeSub?.plan?.planType || "monthly");
       return;
     }
 
@@ -93,7 +127,7 @@ export default function AdminClientDetails() {
       setEditPlan(found.plan || "Growth");
       setEditBillingBasis(found.billingBasis || "monthly");
     }
-  }, [id, apiData]);
+  }, [id, apiData, activeSub]);
 
   const approvedTemplates = TEMPLATES.filter(t => t.status === "Approved");
 
@@ -115,23 +149,21 @@ export default function AdminClientDetails() {
   };
 
   // Launch Campaign
-  const handleLaunchCampaign = (e: React.FormEvent) => {
+  const handleLaunchCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campName || !templateId) return;
+    if (!campName.trim() || !id) return;
 
-    const newCamp = {
-      id: campaigns.length + 1,
-      name: campName,
-      sent: parseInt(campTarget) || 1000,
-      status: "Running"
-    };
-
-    setCampaigns(prev => [newCamp, ...prev]);
-    setIsCampOpen(false);
-
-    setCampName("");
-    setTemplateId("");
-    setCampTarget("3500");
+    try {
+      await createCampaignMutation.mutateAsync({
+        clientId: parseInt(id, 10),
+        campaignName: campName.trim(),
+      });
+      refetchCampaigns();
+      setIsCampOpen(false);
+      setCampName("");
+    } catch (err) {
+      // error is already toasted inside the hook
+    }
   };
 
   // Edit Client details
@@ -163,10 +195,49 @@ export default function AdminClientDetails() {
     return () => clearInterval(interval);
   }, [campTarget]);
 
-  if (!client) {
+  if (isApiLoading || !client) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-deep"></div>
+      <div className="space-y-6 font-sans animate-pulse">
+        <div className="h-4 bg-cream-dark/30 rounded-lg w-24" />
+        
+        {/* Cover Skeleton */}
+        <div className="rounded-[36px] h-56 bg-cream-dark/30 relative overflow-hidden shadow-glow" />
+
+        {/* Profile Card Skeleton */}
+        <div className="-mt-20 relative">
+          <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-wrap items-end gap-6">
+            <div className="h-32 w-32 rounded-[32px] bg-cream-dark/30 border-4 border-white shadow-2xl -mt-16 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="h-7 bg-cream-dark/30 rounded-lg w-1/3" />
+              <div className="h-4 bg-cream-dark/30 rounded-lg w-1/2" />
+            </div>
+          </div>
+        </div>
+
+        {/* Info Grid Skeleton */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 rounded-[28px] bg-white p-6 shadow-float space-y-4">
+            <div className="h-5 bg-cream-dark/30 rounded-lg w-1/4 mb-6" />
+            <div className="space-y-3">
+              <div className="h-36 bg-cream rounded-2xl w-full" />
+              <div className="h-10 bg-cream rounded-2xl w-full" />
+            </div>
+          </div>
+          <div className="rounded-[28px] bg-white p-6 shadow-float space-y-6">
+            <div className="h-5 bg-cream-dark/30 rounded-lg w-1/3" />
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 items-center">
+                  <div className="h-10 w-10 rounded-full bg-cream-dark/30 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-cream-dark/30 rounded-lg w-1/2" />
+                    <div className="h-3 bg-cream-dark/30 rounded-lg w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -183,91 +254,52 @@ export default function AdminClientDetails() {
         <Blob className="absolute -left-10 -bottom-16 w-60 h-60 text-emerald-deep/20" />
         <div className="absolute top-5 right-5 flex gap-2">
           <span className={`px-3 py-1 rounded-full text-xs font-bold ${client.status === "active" ? "bg-white text-brand" : "bg-white/80 text-emerald-deep"}`}>{client.status.toUpperCase()}</span>
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur text-white">{client.category}</span>
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur text-white">
+            {REVERSE_CATEGORY_MAP[client.category] || client.category}
+          </span>
         </div>
       </div>
 
       {/* Profile card */}
       <div className="-mt-24 relative">
-        <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-wrap items-end gap-6">
-          <div className="h-28 w-28 rounded-3xl bg-gradient-brand grid place-items-center text-5xl shadow-glow -mt-14">{client.emoji}</div>
-          <div className="flex-1 min-w-0">
-            <h1 className="font-display font-black text-3xl md:text-4xl text-emerald-deep">{client.company}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground font-semibold">
-              <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5 text-brand" /> {client.owner}</span>
-              <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-brand" /> Bengaluru</span>
+        <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-col md:flex-row items-center md:items-end gap-6">
+          <div className="h-28 w-28 rounded-3xl bg-gradient-brand grid place-items-center text-5xl shadow-glow -mt-16 md:-mt-14 shrink-0 mx-auto md:mx-0">
+            {CATEGORY_EMOJIS[client.category] || "💼"}
+          </div>
+          <div className="flex-1 min-w-0 text-center md:text-left">
+            <h1 className="font-display font-black text-2xl md:text-4xl text-emerald-deep capitalize">{client.company}</h1>
+            <div className="mt-2 flex flex-col md:flex-row md:flex-wrap items-center justify-center md:justify-start gap-2.5 md:gap-3 text-xs md:text-sm text-muted-foreground font-semibold">
+              <span className="inline-flex items-center gap-1 capitalize"><Users className="h-3.5 w-3.5 text-brand" /> {client.owner}</span>
+              <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-brand" /> {client.email}</span>
+              <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-brand" /> {client.phone}</span>
+              <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5 text-brand" /> {client.whatsapp}</span>
               <span className="inline-flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5 text-brand" /> {client.lastActivity}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-              <DialogTrigger asChild>
-                <button className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-secondary font-bold transition text-sm cursor-pointer">
-                  Edit Plan & Status
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
-                <DialogHeader>
-                  <DialogTitle className="font-display font-black text-2xl text-emerald-deep">Edit Client Plan & Status</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleUpdateClient} className="space-y-4 mt-2">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Status</label>
-                    <select
-                      value={editStatus}
-                      onChange={e => setEditStatus(e.target.value as any)}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
-                    >
-                      <option value="active">Active</option>
-                      <option value="trial">Trial</option>
-                      <option value="paused">Paused</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Subscription Plan</label>
-                    <select
-                      value={editPlan}
-                      onChange={e => setEditPlan(e.target.value as any)}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
-                    >
-                      <option value="Starter">Starter</option>
-                      <option value="Growth">Growth</option>
-                      <option value="Enterprise">Enterprise</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Billing Basis</label>
-                    <select
-                      value={editBillingBasis}
-                      onChange={e => setEditBillingBasis(e.target.value as any)}
-                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
-                    >
-                      <option value="monthly">Monthly</option>
-                      <option value="daily">Daily</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4 border-t border-cream">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditOpen(false)}
-                      className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-sm cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-sm cursor-pointer"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            <a href={`tel:${client.phone}`} className="p-3 rounded-2xl bg-cream hover:bg-secondary transition"><Phone className="h-4 w-4 text-emerald-deep" /></a>
-            <a href={`mailto:${client.email}`} className="p-3 rounded-2xl bg-cream hover:bg-secondary transition"><Mail className="h-4 w-4 text-emerald-deep" /></a>
-            <a href="#" className="px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow inline-flex items-center gap-2 cursor-pointer"><MessageCircle className="h-4 w-4" /> WhatsApp</a>
+          <div className="flex items-center justify-center gap-2 flex-wrap w-full md:w-auto">
+            <a
+              href={`tel:${client.phone ? client.phone.replace(/\D/g, "") : ""}`}
+              className="p-3.5 rounded-2xl bg-cream hover:bg-secondary transition flex-1 md:flex-initial text-center"
+              title="Call Client"
+            >
+              <Phone className="h-4 w-4 text-emerald-deep mx-auto" />
+            </a>
+            <a
+              href={`mailto:${client.email}`}
+              className="p-3.5 rounded-2xl bg-cream hover:bg-secondary transition flex-1 md:flex-initial text-center"
+              title="Email Client"
+            >
+              <Mail className="h-4 w-4 text-emerald-deep mx-auto" />
+            </a>
+            <a
+              href={`https://wa.me/${client.whatsapp ? (client.whatsapp.replace(/\D/g, "").length === 10 ? "91" + client.whatsapp.replace(/\D/g, "") : client.whatsapp.replace(/\D/g, "")) : ""}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3.5 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow inline-flex items-center justify-center gap-2 cursor-pointer flex-2 md:flex-initial"
+              title="WhatsApp Client"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
           </div>
         </div>
       </div>
@@ -275,9 +307,9 @@ export default function AdminClientDetails() {
       {/* Analytics (No Revenue metrics, 3 columns) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {[
-          { l: "Campaigns", v: campaigns.length, tone: "bg-white text-emerald-deep" },
-          { l: "Contacts", v: contactsCount.toLocaleString(), tone: "bg-teal-deep text-white" },
-          { l: "Reply Rate", v: "18.2%", tone: "bg-sky-soft text-emerald-deep" },
+          { l: "Campaigns Run", v: usageData ? usageData.campaignsUsed : 0, tone: "bg-white text-emerald-deep" },
+          { l: "Messages Sent", v: usageData ? usageData.messagesUsed : 0, tone: "bg-teal-deep text-white" },
+          { l: "Remaining Messages", v: usageData ? `${usageData.remainingMessages} / ${usageData.totalMessagesAllowed}` : "N/A", tone: "bg-sky-soft text-emerald-deep" },
         ].map((k, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             className={`rounded-[24px] p-5 shadow-float ${k.tone}`}>
@@ -299,37 +331,69 @@ export default function AdminClientDetails() {
 
         {tab === "Overview" && (
           <div className="mt-6 grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <h3 className="font-display font-black text-xl text-emerald-deep mb-3">Message Volume — Last 8 Weeks</h3>
-              <div className="h-64 rounded-2xl bg-cream p-4">
+            {/* Left Hand: Message Volume Area Chart */}
+            <div className="lg:col-span-2 rounded-[28px] border border-emerald-100/50 bg-white p-6 shadow-float flex flex-col justify-between">
+              <div>
+                <h3 className="font-display font-black text-xl text-emerald-deep">Message Dispatch Activity</h3>
+                <p className="text-xs text-muted-foreground mt-1 font-semibold">Weekly aggregate traffic patterns over the last 8 weeks</p>
+              </div>
+              <div className="h-64 mt-6">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={perfData}>
+                  <AreaChart data={perfData} margin={{ left: -20, right: 10, top: 10 }}>
                     <defs>
                       <linearGradient id="cd" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="oklch(0.72 0.19 148)" stopOpacity={0.6} />
+                        <stop offset="0%" stopColor="oklch(0.72 0.19 148)" stopOpacity={0.4} />
                         <stop offset="100%" stopColor="oklch(0.72 0.19 148)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="d" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                    <Tooltip contentStyle={{ borderRadius: 16, border: "none" }} />
+                    <XAxis dataKey="d" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: "#64748b" }} />
+                    <Tooltip contentStyle={{ borderRadius: 16, border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.06)" }} />
                     <Area dataKey="v" stroke="oklch(0.72 0.19 148)" strokeWidth={3} fill="url(#cd)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="rounded-2xl bg-cream p-4">
-                <div className="text-xs text-muted-foreground font-bold uppercase">Onboarded</div>
-                <div className="font-black text-emerald-deep">March 12, 2024</div>
+
+            {/* Right Hand: Client Account Metadata */}
+            <div className="space-y-4">
+              {/* Onboarding Box */}
+              <div className="rounded-[24px] border border-emerald-100/40 bg-white p-5 shadow-float flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-deep grid place-items-center shrink-0">
+                  <Calendar className="h-5 w-5 text-brand" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">Account Onboarded</div>
+                  <div className="font-display font-black text-emerald-deep text-lg mt-0.5">
+                    {apiData?.createdAt ? new Date(apiData.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Recently"}
+                  </div>
+                </div>
               </div>
-              <div className="rounded-2xl bg-cream p-4">
-                <div className="text-xs text-muted-foreground font-bold uppercase">Account Owner</div>
-                <div className="font-black text-emerald-deep">Aarav Menon</div>
+
+              {/* Current Active Plan Card */}
+              <div className="rounded-[24px] border border-emerald-100/40 bg-white p-5 shadow-float flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-deep grid place-items-center shrink-0">
+                  <Users className="h-5 w-5 text-brand" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">Billing Tier</div>
+                  <div className="font-display font-black text-brand text-lg mt-0.5">
+                    {activeSub?.plan?.planName ? `${activeSub.plan.planName} Plan` : "No Active Plan"}
+                  </div>
+                </div>
               </div>
-              <div className="rounded-2xl bg-cream p-4">
-                <div className="text-xs text-muted-foreground font-bold uppercase">Plan</div>
-                <div className="font-black text-emerald-deep">
-                  {client.plan || "Growth"} {client.plan === "Starter" ? (client.billingBasis === "daily" ? "(₹499/day)" : "(₹14,999/mo)") : client.plan === "Enterprise" ? "(Custom)" : (client.billingBasis === "daily" ? "(₹1,199/day)" : "(₹34,999/mo)")}
+
+              {/* Message Consumption Summary */}
+              <div className="rounded-[24px] border border-emerald-100/40 bg-white p-5 shadow-float space-y-4">
+                <div className="flex justify-between items-center text-xs font-bold text-emerald-deep">
+                  <span>Usage Progress</span>
+                  <span className="font-mono text-brand">{msgPercent}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-cream overflow-hidden">
+                  <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${msgPercent}%` }} />
+                </div>
+                <div className="flex justify-between text-[11px] text-muted-foreground font-semibold">
+                  <span>{usageData?.messagesUsed?.toLocaleString() || 0} sent</span>
+                  <span>{usageData?.remainingMessages?.toLocaleString() || 0} left</span>
                 </div>
               </div>
             </div>
@@ -338,8 +402,8 @@ export default function AdminClientDetails() {
 
         {tab === "Contacts" && (
           <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center bg-cream/50 p-4 rounded-2xl border border-cream">
-              <span className="text-xs text-muted-foreground font-bold">Import CSV list to quickly sync customer data</span>
+            <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-cream/50 p-4 rounded-2xl border border-cream">
+              <span className="text-xs text-muted-foreground font-bold text-center sm:text-left">Import CSV list to quickly sync customer data</span>
 
               <Dialog open={isCsvOpen} onOpenChange={setIsCsvOpen}>
                 <DialogTrigger asChild>
@@ -413,8 +477,8 @@ export default function AdminClientDetails() {
 
         {tab === "Campaigns" && (
           <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center bg-cream/50 p-4 rounded-2xl border border-cream">
-              <span className="text-xs text-muted-foreground font-bold">Run custom marketing triggers directly to WhatsApp list</span>
+            <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-cream/50 p-4 rounded-2xl border border-cream">
+              <span className="text-xs text-muted-foreground font-bold text-center sm:text-left">Run custom marketing triggers directly to WhatsApp list</span>
 
               <Dialog open={isCampOpen} onOpenChange={setIsCampOpen}>
                 <DialogTrigger asChild>
@@ -439,35 +503,6 @@ export default function AdminClientDetails() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Target Size</label>
-                        <input
-                          type="number"
-                          required
-                          min="1"
-                          placeholder="e.g. 3500"
-                          value={campTarget}
-                          onChange={e => setCampTarget(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">WhatsApp Template</label>
-                        <select
-                          required
-                          value={templateId}
-                          onChange={e => setTemplateId(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled>Select message template...</option>
-                          {approvedTemplates.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
                     <div className="flex justify-end gap-3 pt-4 border-t border-cream">
                       <button
                         type="button"
@@ -478,9 +513,10 @@ export default function AdminClientDetails() {
                       </button>
                       <button
                         type="submit"
+                        disabled={createCampaignMutation.isPending}
                         className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer"
                       >
-                        Launch Campaign
+                        Create Campaign
                       </button>
                     </div>
                   </form>
@@ -489,111 +525,142 @@ export default function AdminClientDetails() {
             </div>
 
             <div className="space-y-3">
-              {campaigns.map((c, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-cream border border-cream/35 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-emerald-deep">{c.name}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <Send className="h-3 w-3" /> {c.sent.toLocaleString()} sent
-                    </div>
-                  </div>
-                  <span className={`text-xs px-3 py-1 rounded-full font-bold ${c.status === "Running" ? "bg-brand text-white" : "bg-teal-deep text-white"
-                    }`}>
-                    {c.status}
-                  </span>
+              {isCampaignsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-emerald-deep"></div>
                 </div>
-              ))}
+              ) : campaignsData && campaignsData.length > 0 ? (
+                campaignsData.map((c, i) => (
+                  <div key={c.id || i} className="p-4 rounded-2xl bg-cream border border-cream/35 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-emerald-deep capitalize">{c.campaignName}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Send className="h-3 w-3" /> {(c.messagesSent ?? 0).toLocaleString()} sent
+                      </div>
+                    </div>
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${
+                      c.campaignStatus === "RUNNING" ? "bg-brand text-white" : "bg-teal-deep text-white"
+                    }`}>
+                      {c.campaignStatus}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground font-semibold">
+                  No campaigns run yet.
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {tab === "Notes" && (
-          <div className="mt-6 space-y-3">
-            <div className="p-4 rounded-2xl bg-cream">
-              <div className="text-xs text-muted-foreground">Aug 12</div>
-              <div className="mt-1 text-emerald-deep">Client wants to launch a monsoon promo mid-August. Coordinating creatives with in-house team.</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-cream">
-              <div className="text-xs text-muted-foreground">Jul 30</div>
-              <div className="mt-1 text-emerald-deep">Quarterly review call scheduled. Aim to upsell to Enterprise plan.</div>
-            </div>
-          </div>
-        )}
-
-        {tab === "Timeline" && (
-          <div className="mt-6 relative pl-6 border-l-2 border-dashed border-brand/40 space-y-6">
-            {[
-              { t: "Campaign launched", d: "Diwali Blast · 8,200 recipients", w: "2 min ago" },
-              { t: "Template approved", d: "New offer template cleared Meta review", w: "yesterday" },
-              { t: "Contacts imported", d: "1,240 new contacts synced from CRM", w: "3 days ago" },
-              { t: "Payment received", d: "₹34,999 · Growth plan", w: "a week ago" },
-            ].map((e, i) => (
-              <div key={i} className="relative">
-                <span className="absolute -left-[30px] top-1 h-4 w-4 rounded-full bg-gradient-brand shadow-glow" />
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Calendar className="h-3 w-3" /> {e.w}</div>
-                <div className="mt-1 font-bold text-emerald-deep">{e.t}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{e.d}</div>
-              </div>
-            ))}
-          </div>
-        )}
 
         {tab === "Plans" && (
           <div className="mt-6 space-y-6">
-            <div className="rounded-[24px] bg-cream p-6 border border-brand/10">
-              <h3 className="font-display font-black text-xl text-emerald-deep mb-4">Subscription & Plan Details</h3>
-              <div className="grid md:grid-cols-3 gap-5">
-                <div className="bg-white p-5 rounded-2xl shadow-float">
-                  <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Active Plan</div>
-                  <div className="font-black text-brand text-2xl mt-1">{client.plan || "Growth"} Plan</div>
-                </div>
-                <div className="bg-white p-5 rounded-2xl shadow-float">
-                  <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Pricing Tier</div>
-                  <div className="font-black text-emerald-deep text-2xl mt-1">
-                    {client.plan === "Starter"
-                      ? (client.billingBasis === "daily" ? "₹499/day" : "₹14,999/month")
-                      : client.plan === "Enterprise"
-                        ? "Custom Pricing"
-                        : (client.billingBasis === "daily" ? "₹1,199/day" : "₹34,999/month")}
+            {isActiveSubLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-deep"></div>
+              </div>
+            ) : activeSub ? (
+              <div className="rounded-[32px] bg-white border border-emerald-100 shadow-float p-6 md:p-8 space-y-8">
+                {/* Header Hero Area */}
+                <div className="rounded-3xl bg-gradient-brand p-6 md:p-8 text-white relative overflow-hidden shadow-glow flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-sunny/20 rounded-full blur-2xl" />
+                  <div className="relative space-y-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-xs">
+                      {(activeSub.subscriptionStatus || "INACTIVE").toUpperCase()}
+                    </span>
+                    <h3 className="font-display font-black text-2xl md:text-3xl">
+                      {activeSub.plan?.planName || "Starter"} Plan
+                    </h3>
+                    <p className="text-xs text-white/80 font-medium">
+                      Service Plan Code: <span className="font-mono">{activeSub.plan?.planCode}</span>
+                    </p>
+                  </div>
+                  <div className="relative text-left md:text-right">
+                    <div className="text-[10px] uppercase font-black tracking-wider text-white/70">Subscription Cost</div>
+                    <div className="font-display font-black text-3xl mt-1">₹{activeSub.amount?.toLocaleString()}</div>
+                    <div className="text-[11px] font-semibold text-white/80 mt-1">
+                      Valid for {activeSub.plan?.validityDays || 30} days · {activeSub.plan?.planType}
+                    </div>
                   </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-float">
-                  <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Status</div>
-                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase ${client.status === "active" ? "bg-brand/15 text-brand" : client.status === "trial" ? "bg-sunny/45 text-emerald-deep" : "bg-muted text-muted-foreground"
-                    }`}>{client.status}</span>
+
+                {/* Progress Bars and Resource Quota */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Messages Quota Progress */}
+                  <div className="p-6 rounded-2xl bg-cream border border-cream/50 space-y-4">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-emerald-deep">Message Consumption</span>
+                      <span className="font-mono text-muted-foreground">{msgPercent}% Used</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-emerald-100/50 overflow-hidden">
+                      <div className="h-full bg-brand rounded-full transition-all duration-500" style={{ width: `${msgPercent}%` }} />
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase text-muted-foreground">Used</div>
+                        <div className="font-display font-black text-emerald-deep text-lg mt-0.5">{usageData?.messagesUsed?.toLocaleString() || 0}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] font-bold uppercase text-muted-foreground">Remaining</div>
+                        <div className="font-display font-black text-brand text-lg mt-0.5">{usageData?.remainingMessages?.toLocaleString() || 0}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campaigns Quota Progress */}
+                  <div className="p-6 rounded-2xl bg-cream border border-cream/50 space-y-4">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-emerald-deep">Campaigns Run Limit</span>
+                      <span className="font-mono text-muted-foreground">{campPercent}% Used</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-emerald-100/50 overflow-hidden">
+                      <div className="h-full bg-teal-deep rounded-full transition-all duration-500" style={{ width: `${campPercent}%` }} />
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase text-muted-foreground">Used</div>
+                        <div className="font-display font-black text-emerald-deep text-lg mt-0.5">{usageData?.campaignsUsed || 0}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] font-bold uppercase text-muted-foreground">Limit</div>
+                        <div className="font-display font-black text-teal-deep text-lg mt-0.5">{usageData?.totalCampaignsAllowed || 0}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Plan Metadata */}
+                <div className="p-6 rounded-2xl border border-cream bg-white space-y-4">
+                  <h4 className="font-display font-black text-emerald-deep text-lg">Subscription Timeline</h4>
+                  <div className="grid sm:grid-cols-3 gap-4 text-xs font-semibold text-muted-foreground">
+                    <div className="p-4 rounded-xl bg-cream">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Purchase Date</div>
+                      <div className="font-black text-emerald-deep mt-1">
+                        {activeSub.purchaseDate ? new Date(activeSub.purchaseDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }) : "—"}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-cream">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Approved Date</div>
+                      <div className="font-black text-emerald-deep mt-1">
+                        {activeSub.approvedDate ? new Date(activeSub.approvedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }) : "—"}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-cream">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Expiry Date</div>
+                      <div className="font-black text-red-600 mt-1">
+                        {activeSub.expiryDate ? new Date(activeSub.expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }) : "—"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className="mt-6 bg-white p-6 rounded-2xl shadow-float">
-                <h4 className="font-display font-black text-lg text-emerald-deep mb-3">Included Features</h4>
-                <ul className="space-y-3.5 text-sm text-muted-foreground font-semibold">
-                  {client.plan === "Starter" ? (
-                    <>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Up to 10K messages/mo</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ 1 campaign per week</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Basic templates</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Standard analytics</li>
-                    </>
-                  ) : client.plan === "Enterprise" ? (
-                    <>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Unlimited messages</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ White-glove onboarding & dedicated strategist</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Meta green-tick setup</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Custom CRM integrations</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ 24/7 SLA Support</li>
-                    </>
-                  ) : (
-                    <>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Up to 50K messages/mo</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Unlimited campaigns</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Meta green-tick setup</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Dedicated strategist</li>
-                      <li className="flex items-center gap-2 text-emerald-deep">✓ Advanced analytics & CRM integration</li>
-                    </>
-                  )}
-                </ul>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground font-semibold bg-cream rounded-3xl border border-brand/5">
+                Client has no active subscription plans currently.
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

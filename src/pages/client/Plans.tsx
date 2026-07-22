@@ -26,7 +26,6 @@ export default function ClientPlans() {
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isPayOpen, setIsPayOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("UPI");
-  const [paymentReference, setPaymentReference] = useState("");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -39,18 +38,16 @@ export default function ClientPlans() {
 
   const handleOpenPurchase = (plan: any) => {
     setSelectedPlan(plan);
-    setPaymentReference("");
     setIsPayOpen(true);
   };
 
   const handlePaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPlan || !paymentReference.trim()) return;
+    if (!selectedPlan) return;
 
     const payload = {
       planId: selectedPlan.id,
       paymentMethod,
-      paymentReference: paymentReference.trim(),
     };
 
     if (activeSub) {
@@ -85,8 +82,33 @@ export default function ClientPlans() {
       </div>
 
       {isLoading ? (
-        <div className="min-h-[300px] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand" />
+        <div className="space-y-6 animate-pulse">
+          {/* Active Plan Overview Card Skeleton */}
+          <div className="rounded-[28px] bg-white p-6 shadow-float border border-brand/5 space-y-4">
+            <div className="h-4 bg-cream-dark/30 rounded-lg w-1/4" />
+            <div className="h-7 bg-cream-dark/30 rounded-lg w-1/3" />
+            <div className="h-4 bg-cream-dark/30 rounded-lg w-1/2" />
+          </div>
+
+          {/* Pricing Grid Skeleton */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="rounded-[28px] p-6 border border-cream bg-white space-y-6">
+                <div className="space-y-3">
+                  <div className="h-6 bg-cream-dark/30 rounded-lg w-1/3" />
+                  <div className="h-3 bg-cream-dark/30 rounded-lg w-1/4" />
+                  <div className="h-8 bg-cream-dark/30 rounded-lg w-1/2" />
+                </div>
+                <hr className="border-cream" />
+                <div className="space-y-3">
+                  <div className="h-4 bg-cream-dark/30 rounded-lg w-5/6" />
+                  <div className="h-4 bg-cream-dark/30 rounded-lg w-4/5" />
+                  <div className="h-4 bg-cream-dark/30 rounded-lg w-3/4" />
+                </div>
+                <div className="h-10 bg-cream-dark/30 rounded-xl w-full animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -146,28 +168,26 @@ export default function ClientPlans() {
               <div className="flex bg-cream p-1 rounded-xl border border-cream/50">
                 <button
                   onClick={() => setBillingBasis("MONTHLY")}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    billingBasis === "MONTHLY"
-                      ? "bg-white text-emerald-deep shadow-float"
-                      : "text-muted-foreground hover:text-emerald-deep"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${billingBasis === "MONTHLY"
+                    ? "bg-white text-emerald-deep shadow-float"
+                    : "text-muted-foreground hover:text-emerald-deep"
+                    }`}
                 >
                   Monthly Basis
                 </button>
                 <button
                   onClick={() => setBillingBasis("DAILY")}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    billingBasis === "DAILY"
-                      ? "bg-white text-emerald-deep shadow-float"
-                      : "text-muted-foreground hover:text-emerald-deep"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${billingBasis === "DAILY"
+                    ? "bg-white text-emerald-deep shadow-float"
+                    : "text-muted-foreground hover:text-emerald-deep"
+                    }`}
                 >
                   Daily Basis
                 </button>
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid xl:grid-cols-3 md:grid-cols-2  gap-6">
               {filteredPlans.map((p, i) => {
                 const isCurrent = activeSub?.plan?.id === p.id && activeSub.subscriptionStatus === "ACTIVE";
                 return (
@@ -243,7 +263,6 @@ export default function ClientPlans() {
                 <thead>
                   <tr className="border-b border-cream text-xs text-muted-foreground font-bold uppercase tracking-wider">
                     <th className="pb-3 pl-2">Plan Name</th>
-                    <th className="pb-3">Reference / UTR</th>
                     <th className="pb-3">Amount</th>
                     <th className="pb-3">Method</th>
                     <th className="pb-3">Status</th>
@@ -259,18 +278,16 @@ export default function ClientPlans() {
                     return (
                       <tr key={p.id} className="text-xs sm:text-sm font-semibold text-emerald-deep hover:bg-cream/10 transition">
                         <td className="py-3.5 pl-2 font-bold">{planName}</td>
-                        <td className="py-3.5 font-mono text-[11px] text-brand uppercase">{p.paymentReference}</td>
                         <td className="py-3.5 font-extrabold">₹{p.amount.toLocaleString()}</td>
                         <td className="py-3.5 text-xs">{p.paymentMethod}</td>
                         <td className="py-3.5">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                              p.status === "APPROVED"
-                                ? "bg-emerald-100 text-emerald-deep"
-                                : p.status === "REJECTED"
+                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${p.status === "APPROVED"
+                              ? "bg-emerald-100 text-emerald-deep"
+                              : p.status === "REJECTED"
                                 ? "bg-red-100 text-red-600"
                                 : "bg-amber-100 text-amber-800"
-                            }`}
+                              }`}
                           >
                             {p.status}
                           </span>
@@ -351,19 +368,9 @@ export default function ClientPlans() {
           </div>
 
           <form onSubmit={handlePaySubmit} className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-deep mb-1 ml-0.5">
-                Transaction Reference ID / UTR
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Enter 12-digit UPI reference ID"
-                value={paymentReference}
-                onChange={(e) => setPaymentReference(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-xs text-foreground font-semibold"
-              />
-            </div>
+            <p className="text-xs text-emerald-deep font-semibold text-center py-2">
+              Once you have completed the payment via UPI, click below to submit your subscription request.
+            </p>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-cream">
               <button

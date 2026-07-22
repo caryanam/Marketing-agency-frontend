@@ -25,14 +25,15 @@ export function useClientAuth() {
 
     try {
       const categoryMap: Record<string, string> = {
-        "Used Cars": "USED_CAR_DEALERS",
-        "Healthcare": "HOSPITALS",
-        "Real Estate": "REAL_ESTATE",
+        "Used Car Dealers": "USED_CAR_DEALERS",
+        "Car Showrooms": "CAR_SHOWROOMS",
+        "Hospitals": "HOSPITALS",
         "Garages": "GARAGES",
-        "Insurance": "INSURANCE_AGENTS",
-        "Education": "SCHOOLS_AND_COLLEGES",
-        "Hospitality": "HOTELS_AND_RESTAURANTS",
-        "Finance": "FINANCE_COMPANIES",
+        "Real Estate": "REAL_ESTATE",
+        "Insurance Agents": "INSURANCE_AGENTS",
+        "Schools And Colleges": "SCHOOLS_AND_COLLEGES",
+        "Hotels And Restaurants": "HOTELS_AND_RESTAURANTS",
+        "Finance Companies": "FINANCE_COMPANIES",
       };
 
       const mappedCategory = categoryMap[payload.category] || payload.category;

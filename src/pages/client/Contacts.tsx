@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Users, Tag, Phone, Mail } from "lucide-react";
 
 const SEGMENTS = [
@@ -22,6 +22,15 @@ const CONTACTS = [
 
 export default function ClientContacts() {
   const [q, setQ] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   const filtered = CONTACTS.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q));
 
   return (
@@ -34,7 +43,7 @@ export default function ClientContacts() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         {SEGMENTS.map((s, i) => (
           <motion.div key={s.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`rounded-[24px] p-5 shadow-float bg-gradient-to-br ${s.tone} text-white`}>
             <Users className="h-5 w-5 opacity-80" />
@@ -52,25 +61,42 @@ export default function ClientContacts() {
           </div>
         </div>
 
-        <div className="divide-y divide-cream">
-          {filtered.map((c, i) => (
-            <div key={i} className="p-4 flex flex-wrap items-center gap-4 hover:bg-cream/40 transition">
-              <div className="h-11 w-11 rounded-full bg-gradient-brand grid place-items-center text-white font-black text-sm shrink-0">
-                {c.name.split(" ").map(p => p[0]).slice(0,2).join("")}
+        {isLoading ? (
+          <div className="divide-y divide-cream animate-pulse">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="p-4 flex flex-wrap items-center gap-4">
+                <div className="h-11 w-11 rounded-full bg-cream-dark/30 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-cream-dark/30 rounded-lg w-1/3" />
+                  <div className="h-3 bg-cream-dark/30 rounded-lg w-1/4" />
+                </div>
+                <div className="h-4 bg-cream-dark/30 rounded-lg w-32 hidden md:block" />
+                <div className="h-4 bg-cream-dark/30 rounded-lg w-40 hidden lg:block" />
+                <div className="h-6 bg-cream-dark/30 rounded-full w-16" />
               </div>
-              <div className="min-w-[140px] flex-1">
-                <div className="font-bold text-emerald-deep">{c.name}</div>
-                <div className="text-xs text-muted-foreground">Joined {c.joined}</div>
+            ))}
+          </div>
+        ) : (
+          <div className="divide-y divide-cream">
+            {filtered.map((c, i) => (
+              <div key={i} className="p-4 flex flex-wrap items-center gap-4 hover:bg-cream/40 transition">
+                <div className="h-11 w-11 rounded-full bg-gradient-brand grid place-items-center text-white font-black text-sm shrink-0">
+                  {c.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                </div>
+                <div className="min-w-[140px] flex-1">
+                  <div className="font-bold text-emerald-deep">{c.name}</div>
+                  <div className="text-xs text-muted-foreground">Joined {c.joined}</div>
+                </div>
+                <div className="text-xs text-muted-foreground hidden md:flex items-center gap-1.5 min-w-[140px]"><Phone className="h-3.5 w-3.5" /> {c.phone}</div>
+                <div className="text-xs text-muted-foreground hidden lg:flex items-center gap-1.5 min-w-[160px]"><Mail className="h-3.5 w-3.5" /> {c.email}</div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-cream text-emerald-deep"><Tag className="h-3 w-3" /> {c.tag}</span>
               </div>
-              <div className="text-xs text-muted-foreground hidden md:flex items-center gap-1.5 min-w-[140px]"><Phone className="h-3.5 w-3.5" /> {c.phone}</div>
-              <div className="text-xs text-muted-foreground hidden lg:flex items-center gap-1.5 min-w-[160px]"><Mail className="h-3.5 w-3.5" /> {c.email}</div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-cream text-emerald-deep"><Tag className="h-3 w-3" /> {c.tag}</span>
-            </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="p-10 text-center text-sm text-muted-foreground">No contacts match your search.</div>
-          )}
-        </div>
+            ))}
+            {filtered.length === 0 && (
+              <div className="p-10 text-center text-sm text-muted-foreground">No contacts match your search.</div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

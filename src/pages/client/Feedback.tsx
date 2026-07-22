@@ -30,27 +30,27 @@ const CardSkeleton = () => (
 );
 
 const CATEGORIES = [
-  { label: "Used Cars", value: "USED_CAR_DEALERS" },
+  { label: "Used Car Dealers", value: "USED_CAR_DEALERS" },
   { label: "Car Showrooms", value: "CAR_SHOWROOMS" },
-  { label: "Healthcare", value: "HOSPITALS" },
+  { label: "Hospitals", value: "HOSPITALS" },
   { label: "Garages", value: "GARAGES" },
   { label: "Real Estate", value: "REAL_ESTATE" },
-  { label: "Insurance", value: "INSURANCE_AGENTS" },
-  { label: "Finance", value: "FINANCE_COMPANIES" },
-  { label: "Education", value: "SCHOOLS_AND_COLLEGES" },
-  { label: "Hospitality", value: "HOTELS_AND_RESTAURANTS" },
+  { label: "Insurance Agents", value: "INSURANCE_AGENTS" },
+  { label: "Finance Companies", value: "FINANCE_COMPANIES" },
+  { label: "Schools And Colleges", value: "SCHOOLS_AND_COLLEGES" },
+  { label: "Hotels And Restaurants", value: "HOTELS_AND_RESTAURANTS" },
 ];
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
-  USED_CAR_DEALERS: "Used Cars",
+  USED_CAR_DEALERS: "Used Car Dealers",
   CAR_SHOWROOMS: "Car Showrooms",
-  HOSPITALS: "Healthcare",
+  HOSPITALS: "Hospitals",
   GARAGES: "Garages",
   REAL_ESTATE: "Real Estate",
-  INSURANCE_AGENTS: "Insurance",
-  FINANCE_COMPANIES: "Finance",
-  SCHOOLS_AND_COLLEGES: "Education",
-  HOTELS_AND_RESTAURANTS: "Hospitality",
+  INSURANCE_AGENTS: "Insurance Agents",
+  FINANCE_COMPANIES: "Finance Companies",
+  SCHOOLS_AND_COLLEGES: "Schools And Colleges",
+  HOTELS_AND_RESTAURANTS: "Hotels And Restaurants",
 };
 
 export default function ClientFeedback() {

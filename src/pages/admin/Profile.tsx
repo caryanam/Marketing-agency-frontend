@@ -101,7 +101,7 @@ export default function AdminProfile() {
         </div>
 
         {/* System & Access Status Sidebar Card */}
-        <div className="space-y-5">
+        {/* <div className="space-y-5">
           <div className="rounded-[28px] bg-emerald-deep text-white p-6 shadow-float relative overflow-hidden">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-2xl bg-white/10 grid place-items-center text-sunny">
@@ -127,7 +127,7 @@ export default function AdminProfile() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

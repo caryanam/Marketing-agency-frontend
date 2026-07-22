@@ -238,10 +238,41 @@ export default function ClientProfile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-deep"></div>
-          <span className="text-sm font-semibold text-emerald-900">Loading client profile...</span>
+      <div className="space-y-6 font-sans animate-pulse">
+        {/* Cover Skeleton */}
+        <div className="rounded-[36px] h-48 bg-cream-dark/30 relative overflow-hidden shadow-glow" />
+        
+        {/* Profile Info Header Skeleton */}
+        <div className="-mt-24 relative">
+          <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-wrap items-end gap-6 relative">
+            <div className="h-32 w-32 rounded-[32px] bg-cream-dark/30 border-4 border-white shadow-2xl -mt-20 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="h-7 bg-cream-dark/30 rounded-lg w-1/3" />
+              <div className="h-4 bg-cream-dark/30 rounded-lg w-1/2" />
+            </div>
+          </div>
+        </div>
+
+        {/* Info Grid Skeleton */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 rounded-[28px] bg-white p-6 shadow-float space-y-4">
+            <div className="h-5 bg-cream-dark/30 rounded-lg w-1/4 mb-6" />
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 bg-cream-dark/30 rounded-lg w-1/3" />
+                  <div className="h-10 bg-cream-dark/30 rounded-xl w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[28px] bg-white p-6 shadow-float space-y-4">
+            <div className="h-5 bg-cream-dark/30 rounded-lg w-1/3 mb-6" />
+            <div className="space-y-4">
+              <div className="h-12 bg-cream-dark/30 rounded-2xl w-full" />
+              <div className="h-12 bg-cream-dark/30 rounded-2xl w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -257,35 +288,36 @@ export default function ClientProfile() {
 
       {/* Profile Info Header */}
       <div className="-mt-24 relative">
-        <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-wrap items-end gap-6 relative">
-          <div className="h-32 w-32 rounded-[32px] bg-gradient-sun text-emerald-deep border-4 border-white shadow-2xl grid place-items-center font-display font-black text-4xl -mt-20 relative z-10 shrink-0">
-            {initials || "C"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-display capitalize font-black text-3xl  text-emerald-deep">{name || "Client Profile"}</h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-extrabold uppercase shrink-0">
-                {activeSub?.plan?.planName || "No Active"} Plan
-              </span>
+        <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-glow flex flex-col xl:flex-row items-center justify-between gap-6 relative">
+          <div className="flex flex-col xl:flex-row items-center gap-6 flex-1 min-w-0">
+            <div className="h-32 w-32 rounded-[32px] bg-gradient-sun text-emerald-deep border-4 border-white shadow-2xl grid place-items-center font-display font-black text-4xl -mt-20 relative z-10 shrink-0 mx-auto xl:mx-0">
+              {initials || "C"}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground font-semibold">
-              <span className="inline-flex items-center gap-1 capitalize"><Building2 className="h-3.5 w-3.5 text-brand" /> {company || "N/A"}</span>
-              <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-brand" /> {email || "N/A"}</span>
-
+            <div className="flex-1 min-w-0 text-center xl:text-left">
+              <div className="flex flex-col xl:flex-row items-center gap-2 justify-center xl:justify-start">
+                <h1 className="font-display capitalize font-black text-2xl md:text-3xl text-emerald-deep">{name || "Client Profile"}</h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-extrabold uppercase shrink-0">
+                  {activeSub?.plan?.planName || "No Active"} Plan
+                </span>
+              </div>
+              <div className="mt-2 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center xl:justify-start gap-2.5 sm:gap-3 text-xs md:text-sm text-muted-foreground font-semibold min-w-0">
+                <span className="inline-flex items-center gap-1 capitalize"><Building2 className="h-3.5 w-3.5 text-brand shrink-0" /> <span className="truncate">{company || "N/A"}</span></span>
+                <span className="inline-flex items-center gap-1 min-w-0"><Mail className="h-3.5 w-3.5 text-brand shrink-0" /> <span className="truncate">{email || "N/A"}</span></span>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 w-full xl:w-auto shrink-0">
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow inline-flex items-center gap-2 hover:shadow-lg transition cursor-pointer"
+                className="px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow inline-flex items-center justify-center gap-2 hover:shadow-lg transition cursor-pointer flex-1 md:flex-initial"
               >
                 <Edit3 className="h-4 w-4" /> Edit Profile
               </button>
             )}
             <button
               onClick={handleOpenPasswordModal}
-              className="px-5 py-3 rounded-2xl bg-cream border border-emerald-200 text-emerald-deep font-bold hover:bg-emerald-100/60 inline-flex items-center gap-2 transition cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-cream border border-emerald-200 text-emerald-deep font-bold hover:bg-emerald-100/60 inline-flex items-center justify-center gap-2 transition cursor-pointer flex-1 md:flex-initial"
             >
               <KeyRound className="h-4 w-4 text-brand" /> Change Password
             </button>
@@ -293,9 +325,9 @@ export default function ClientProfile() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid xl:grid-cols-3 gap-6">
         {/* Main Form Area */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
           <AnimatePresence mode="wait">
             {isEditing ? (
               <motion.div

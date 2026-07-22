@@ -97,8 +97,8 @@ export default function ContactPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10 space-y-16">
 
             {/* Top Side: 3 Quick Contact Info Cards */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              <div className="p-5 sm:p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
                 <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white grid place-items-center shrink-0 shadow-glow">
                   <PhoneCall className="h-6 w-6" />
                 </div>
@@ -111,20 +111,20 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
+              <div className="p-5 sm:p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
                 <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white grid place-items-center shrink-0 shadow-glow">
                   <Mail className="h-6 w-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Email Us</div>
-                  <a href="mailto:support@caryanam.com" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition">
+                  <a href="mailto:support@caryanam.com" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition truncate">
                     support@caryanam.com
                   </a>
                   <div className="text-[11px] text-brand font-semibold">Average reply under 15 mins</div>
                 </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
+              <div className="p-5 sm:p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex items-center gap-4 hover:shadow-glow transition">
                 <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white grid place-items-center shrink-0 shadow-glow">
                   <MapPin className="h-6 w-6" />
                 </div>
@@ -137,11 +137,11 @@ export default function ContactPage() {
             </div>
 
             {/* Main Grid: Left = Support Illustration, Right = Contact Form */}
-            <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-center">
+            <div className="grid lg:grid-cols-[1fr_1.1fr] gap-10 sm:gap-16 items-center">
 
               {/* Left Column: Support Illustration + Floating Badges */}
-              <motion.div {...fadeUp} className="relative">
-                <div className="absolute inset-8 rounded-[48px] bg-gradient-teal -rotate-3 shadow-glow" />
+              <motion.div {...fadeUp} className="relative max-w-md mx-auto lg:max-w-none w-full">
+                <div className="absolute inset-4 sm:inset-8 rounded-[36px] sm:rounded-[48px] bg-gradient-teal -rotate-3 shadow-glow" />
                 <img
                   src={supportImg}
                   alt="Support Team"
@@ -150,32 +150,32 @@ export default function ContactPage() {
                   loading="lazy"
                   className="relative w-full object-contain drop-shadow-2xl"
                 />
-                <div className="absolute -bottom-4 left-6 glass-card rounded-2xl px-4 py-3 shadow-float">
-                  <div className="text-xs text-muted-foreground">Reply time</div>
-                  <div className="font-black text-emerald-deep text-sm">under 15 min</div>
+                <div className="absolute -bottom-2 sm:-bottom-4 left-2 sm:left-6 glass-card rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-float">
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">Reply time</div>
+                  <div className="font-black text-emerald-deep text-xs sm:text-sm">under 15 min</div>
                 </div>
-                <div className="absolute top-4 right-4 glass-card rounded-2xl px-4 py-3 flex items-center gap-2 shadow-float">
+                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 glass-card rounded-2xl px-3 py-2 sm:px-4 sm:py-3 flex items-center gap-2 shadow-float">
                   <span className="h-2 w-2 rounded-full bg-brand animate-pulse" />
-                  <span className="text-xs font-bold text-emerald-deep">We're online</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-emerald-deep">We're online</span>
                 </div>
               </motion.div>
 
               {/* Right Column: Contact Form */}
-              <motion.div {...fadeUp} className="rounded-[42px] glass-card p-8 md:p-10 shadow-glow">
-                <div className="text-sm font-black uppercase tracking-[0.3em] text-brand">Reach Us</div>
-                <h2 className="mt-3 font-display text-4xl md:text-5xl font-black text-emerald-deep">
+              <motion.div {...fadeUp} className="rounded-[32px] sm:rounded-[42px] glass-card p-5 sm:p-8 md:p-10 shadow-glow w-full">
+                <div className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-brand">Reach Us</div>
+                <h2 className="mt-2 sm:mt-3 font-display text-2xl sm:text-4xl md:text-5xl font-black text-emerald-deep leading-tight">
                   Hi there! <span className="italic text-gradient-brand">What can we build</span> for you today?
                 </h2>
 
                 {submitted ? (
-                  <div className="mt-8 p-8 rounded-3xl bg-white/90 backdrop-blur border border-emerald-200 text-center space-y-4 shadow-float">
-                    <div className="h-16 w-16 bg-emerald-100 text-emerald-deep rounded-full grid place-items-center mx-auto">
-                      <CheckCircle2 className="h-8 w-8 text-brand" />
+                  <div className="mt-6 sm:mt-8 p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur border border-emerald-200 text-center space-y-4 shadow-float">
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 bg-emerald-100 text-emerald-deep rounded-full grid place-items-center mx-auto">
+                      <CheckCircle2 className="h-7 w-7 sm:h-8 sm:w-8 text-brand" />
                     </div>
-                    <h3 className="font-display font-black text-2xl text-emerald-deep">
+                    <h3 className="font-display font-black text-xl sm:text-2xl text-emerald-deep">
                       Enquiry Received!
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Thank you for contacting Caryanam. Our team has received your enquiry and will respond within 15 minutes.
                     </p>
                     <button
@@ -186,14 +186,14 @@ export default function ContactPage() {
                     </button>
                   </div>
                 ) : (
-                  <form className="mt-8 grid sm:grid-cols-2 gap-4" onSubmit={handleSubmit}>
+                  <form className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" onSubmit={handleSubmit}>
                     <input
                       type="text"
                       required
                       placeholder="Your Name *"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-brand transition font-medium text-sm w-full"
                     />
                     <input
                       type="tel"
@@ -202,7 +202,7 @@ export default function ContactPage() {
                       placeholder="Phone Number (10 digits) *"
                       value={phone}
                       onChange={(e) => handlePhoneInput(e.target.value)}
-                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                      className="col-span-1 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-brand transition font-medium text-sm w-full"
                     />
                     <input
                       type="email"
@@ -210,7 +210,7 @@ export default function ContactPage() {
                       placeholder="Email Address *"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm"
+                      className="col-span-1 sm:col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-brand transition font-medium text-sm w-full"
                     />
                     <textarea
                       required
@@ -218,12 +218,12 @@ export default function ContactPage() {
                       rows={4}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-5 py-4 outline-none focus:border-brand transition font-medium text-sm resize-none"
+                      className="col-span-1 sm:col-span-2 rounded-2xl bg-white/70 backdrop-blur border border-border/60 px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-brand transition font-medium text-sm resize-none w-full"
                     />
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="col-span-2 mt-2 px-7 py-4 rounded-full bg-brand text-white font-bold shadow-glow hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="col-span-1 sm:col-span-2 mt-2 px-7 py-4 rounded-full bg-brand text-white font-bold shadow-glow hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 w-full"
                     >
                       {isSubmitting ? (
                         <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -237,9 +237,9 @@ export default function ContactPage() {
                   </form>
                 )}
 
-                <div className="mt-8 pt-6 border-t border-border/40 grid sm:grid-cols-3 gap-3 text-xs text-emerald-deep font-semibold">
+                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border/40 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-emerald-deep font-semibold">
                   <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7755994123</div>
-                  <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-brand shrink-0" /> support@caryanam.com</div>
+                  <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-brand shrink-0" /> <span className="truncate">support@caryanam.com</span></div>
                   <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand shrink-0" /> Kharadi, Pune, 411014</div>
                 </div>
               </motion.div>

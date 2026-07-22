@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { clientApiFetch } from "@/lib/api";
+import { clientApiFetch, apiFetch } from "@/lib/api";
 import { SubscriptionPlanItem, ClientSubscriptionItem, PaymentHistoryItem } from "../admin/useAdminSubscription";
 import { CampaignResponseItem } from "../admin/useAdminCampaign";
 
 export interface PurchaseRequestPayload {
   planId: number;
   paymentMethod: string;
-  paymentReference: string;
+  paymentReference?: string;
 }
 
 export interface SubscriptionUsageData {
@@ -27,6 +27,19 @@ export function useClientActivePlans() {
     queryKey: ["clientActivePlans"],
     queryFn: async () => {
       const response = await clientApiFetch<SubscriptionPlanItem[]>("/api/plans");
+      if (response.status === "SUCCESS" && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message || "Failed to fetch plans.");
+    },
+  });
+}
+
+export function usePublicActivePlans() {
+  return useQuery<SubscriptionPlanItem[]>({
+    queryKey: ["publicActivePlans"],
+    queryFn: async () => {
+      const response = await apiFetch<SubscriptionPlanItem[]>("/api/plans");
       if (response.status === "SUCCESS" && response.data) {
         return response.data;
       }

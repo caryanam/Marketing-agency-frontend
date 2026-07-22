@@ -7,15 +7,15 @@ import { usePublicFeedbacks } from "@/hooks/public/usePublicFeedback";
 const EMOJIS = ["🧑‍💻", "👩‍💻", "🧑‍💼", "👩‍💼", "🚀", "💡", "🎯", "🌟", "🦁", "🦊", "🐼", "🦄"];
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
-  USED_CAR_DEALERS: "Used Cars",
+  USED_CAR_DEALERS: "Used Car Dealers",
   CAR_SHOWROOMS: "Car Showrooms",
-  HOSPITALS: "Healthcare",
+  HOSPITALS: "Hospitals",
   GARAGES: "Garages",
   REAL_ESTATE: "Real Estate",
-  INSURANCE_AGENTS: "Insurance",
-  FINANCE_COMPANIES: "Finance",
-  SCHOOLS_AND_COLLEGES: "Education",
-  HOTELS_AND_RESTAURANTS: "Hospitality",
+  INSURANCE_AGENTS: "Insurance Agents",
+  FINANCE_COMPANIES: "Finance Companies",
+  SCHOOLS_AND_COLLEGES: "Schools And Colleges",
+  HOTELS_AND_RESTAURANTS: "Hotels And Restaurants",
 };
 
 const CardSkeleton = () => (

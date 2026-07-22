@@ -89,7 +89,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.7 }}
-            className="absolute top-1/2 left-0 glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
+            className="absolute top-1/2 left-0 glass-card rounded-2xl px-4 py-3 hidden sm:flex items-center gap-3"
           >
             <div className="h-10 w-10 rounded-xl bg-gradient-sun grid place-items-center text-emerald-deep"><TrendingUp className="h-5 w-5" /></div>
             <div>
@@ -102,7 +102,7 @@ export default function Hero() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1, duration: 0.7 }}
-            className="absolute bottom-24 -left-4 lg:-left-10 glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
+            className="absolute bottom-24 -left-4 lg:-left-10 glass-card rounded-2xl px-4 py-3 hidden sm:flex items-center gap-3"
           >
             <div className="h-10 w-10 rounded-xl bg-teal-deep grid place-items-center text-white"><Users className="h-5 w-5" /></div>
             <div>

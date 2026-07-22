@@ -15,14 +15,15 @@ import { useAuth } from "@/hooks/auth/useAuth";
 import { useClientAuth } from "@/hooks/auth/useClientAuth";
 
 const CATEGORIES = [
-  "Used Cars",
-  "Healthcare",
-  "Real Estate",
+  "Used Car Dealers",
+  "Car Showrooms",
+  "Hospitals",
   "Garages",
-  "Insurance",
-  "Education",
-  "Hospitality",
-  "Finance",
+  "Real Estate",
+  "Insurance Agents",
+  "Schools And Colleges",
+  "Hotels And Restaurants",
+  "Finance Companies",
 ];
 
 export default function Login() {

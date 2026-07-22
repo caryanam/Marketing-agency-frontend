@@ -9,7 +9,7 @@ export function useAdminClients() {
   const clientsQuery = useQuery<ClientProfileData[]>({
     queryKey: ["adminClients"],
     queryFn: async () => {
-      const response = await adminApiFetch<ClientProfileData[]>("/api/client/all");
+      const response = await adminApiFetch<ClientProfileData[]>("/api/admin/clients");
       if (response.status === "SUCCESS" && response.data) {
         return response.data;
       }
@@ -72,4 +72,50 @@ export function useAdminClientDetails(clientId: string | number) {
     updateClient: updateClientMutation.mutateAsync,
     isUpdating: updateClientMutation.isPending,
   };
+}
+
+export function useAdminClientUsage(clientId: string | number) {
+  return useQuery({
+    queryKey: ["adminClientUsage", String(clientId)],
+    queryFn: async () => {
+      const response = await adminApiFetch<any>(`/api/subscription/usage?clientId=${clientId}`);
+      if (response.status === "SUCCESS" && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message || "Failed to fetch client usage.");
+    },
+    enabled: !!clientId,
+  });
+}
+
+export function useAdminClientCampaigns(clientId: string | number) {
+  return useQuery({
+    queryKey: ["adminClientCampaigns", String(clientId)],
+    queryFn: async () => {
+      const response = await adminApiFetch<any[]>(`/api/subscription/campaigns?clientId=${clientId}`);
+      if (response.status === "SUCCESS" && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message || "Failed to fetch client campaigns.");
+    },
+    enabled: !!clientId,
+  });
+}
+
+export function useAdminClientSubscription(clientId: string | number) {
+  return useQuery({
+    queryKey: ["adminClientSubscription", String(clientId)],
+    queryFn: async () => {
+      try {
+        const response = await adminApiFetch<any>(`/api/subscription/current?clientId=${clientId}`);
+        if (response.status === "SUCCESS" && response.data) {
+          return response.data;
+        }
+      } catch (e) {
+        return null;
+      }
+      return null;
+    },
+    enabled: !!clientId,
+  });
 }

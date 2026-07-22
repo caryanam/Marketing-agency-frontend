@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { LayoutTemplate, LayoutGrid, List } from "lucide-react";
 import { TEMPLATES } from "@/lib/admin-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const TEMPLATE_CONTENT: Record<number, { body: string; preview: string; mediaUrl?: string }> = {
   1: {
@@ -34,6 +34,15 @@ const TEMPLATE_CONTENT: Record<number, { body: string; preview: string; mediaUrl
 
 export default function AdminTemplates() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   const approvedTemplates = TEMPLATES.filter((t) => t.status === "Approved");
 
   return (
@@ -54,7 +63,7 @@ export default function AdminTemplates() {
         <div className="text-sm font-bold text-emerald-deep">
           Showing {approvedTemplates.length} Approved Templates
         </div>
-        <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-float border border-cream">
+        <div className="hidden md:flex items-center gap-2 bg-white p-1 rounded-2xl shadow-float border border-cream">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded-xl transition cursor-pointer ${
@@ -77,7 +86,24 @@ export default function AdminTemplates() {
       </div>
 
       {/* Templates List/Grid Container */}
-      <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "flex flex-col gap-6"}>
+      {isLoading ? (
+        <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse" : "flex flex-col gap-6 animate-pulse"}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="rounded-[28px] bg-white p-6 shadow-float border border-cream space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-cream-dark/30 shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-cream-dark/30 rounded-lg w-1/2" />
+                  <div className="h-3 bg-cream-dark/30 rounded-lg w-1/3" />
+                </div>
+              </div>
+              <div className="h-16 bg-cream-dark/15 rounded-2xl w-full" />
+              <div className="h-10 bg-cream-dark/30 rounded-xl w-full" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "flex flex-col gap-6"}>
         {approvedTemplates.map((t, i) => {
           const detail = TEMPLATE_CONTENT[t.id] || { body: "", preview: "" };
           return (
@@ -111,7 +137,7 @@ export default function AdminTemplates() {
               </div>
 
               {/* Contents Section (Raw Code & Preview) */}
-              <div className={`flex-1 flex ${viewMode === "grid" ? "flex-col gap-4" : "flex-col md:flex-row gap-6"}`}>
+              <div className={`flex-1 flex ${viewMode === "grid" ? "flex-col gap-4" : "flex-col xl:flex-row gap-6"}`}>
                 {/* Raw Template Code */}
                 <div className="flex-1 flex flex-col min-w-0">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Raw Template Code</span>
@@ -121,7 +147,7 @@ export default function AdminTemplates() {
                 </div>
 
                 {/* WhatsApp Message Preview */}
-                <div className={`${viewMode === "grid" ? "w-full" : "w-full md:w-80 shrink-0"} flex flex-col`}>
+                <div className={`${viewMode === "grid" ? "w-full" : "w-full xl:w-80 shrink-0"} flex flex-col`}>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">WhatsApp Message Preview</span>
                   <div className="flex-1 p-4 rounded-2xl bg-[#efeae2] relative border border-[#e0dcd5] shadow-inner flex flex-col justify-center min-h-[160px]">
                     {/* Chat Bubble styling mimicking WhatsApp */}
@@ -148,7 +174,8 @@ export default function AdminTemplates() {
             </motion.div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

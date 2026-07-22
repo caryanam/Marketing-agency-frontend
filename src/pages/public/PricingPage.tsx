@@ -6,6 +6,7 @@ import Footer from "@/components/site/sections/Footer";
 import { Blob } from "@/components/site/Decor";
 import { CreditCard, HelpCircle, Zap, CheckCircle2, ArrowRight, ShieldAlert } from "lucide-react";
 import { fadeUp } from "@/lib/animations";
+import { usePublicActivePlans } from "@/hooks/client/useClientSubscription";
 
 const pricingFaqs = [
   {
@@ -29,64 +30,40 @@ const pricingFaqs = [
 export default function PricingPage() {
   const [billingBasis, setBillingBasis] = useState<"monthly" | "daily">("monthly");
 
-  const plans = [
-    {
-      name: "Starter",
-      price: billingBasis === "daily" ? "₹499" : "₹14,999",
-      period: billingBasis === "daily" ? "/day" : "/mo",
-      tag: "For growing businesses",
-      features: [
-        "Up to 10K messages/mo",
-        "1 broadcast campaign per week",
-        "Standard WhatsApp message templates",
-        "Email & ticket customer support",
-        "Standard deliverability analytics"
-      ],
-      tone: "bg-white text-emerald-deep",
-      cta: "Start Starter Plan",
-      highlight: false,
-    },
-    {
-      name: "Growth",
-      price: billingBasis === "daily" ? "₹1,199" : "₹34,999",
-      period: billingBasis === "daily" ? "/day" : "/mo",
-      tag: "Most popular choice",
-      features: [
-        "Up to 50K messages/mo",
-        "Unlimited broadcast campaigns",
-        "Official Meta Green-Tick setup assistance",
-        "Dedicated WhatsApp campaign strategist",
-        "Advanced real-time analytics & CTR reports",
-        "Custom CRM & webhook integration"
-      ],
-      tone: "bg-gradient-brand text-white",
-      cta: "Start Growth Plan",
-      highlight: true,
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      period: "",
-      tag: "For 100+ business locations",
-      features: [
-        "Unlimited message throughput SLA",
-        "White-glove 1-on-1 account onboarding",
-        "Custom API & ERP database integrations",
-        "24/7 priority SLA support helpline",
-        "Dedicated Cloud API server infra",
-        "Quarterly ROI business review meetings"
-      ],
-      tone: "bg-emerald-deep text-white",
-      cta: "Talk to Sales",
-      highlight: false,
-    },
-  ];
+  const { data: activePlans = [], isLoading } = usePublicActivePlans();
+
+  const filteredPlans = activePlans.filter(
+    (p) => p.planType === (billingBasis === "monthly" ? "MONTHLY" : "DAILY") && p.isActive
+  );
+
+  const displayPlans = filteredPlans.map((p) => {
+    const isGrowth = p.planName.toLowerCase().includes("growth");
+    const isStarter = p.planName.toLowerCase().includes("starter");
+    const isEnterprise = p.planName.toLowerCase().includes("enterprise");
+
+    const features: string[] = [
+      `Up to ${p.messageLimit.toLocaleString()} messages limit`,
+      `${p.campaignLimit} broadcast campaign${p.campaignLimit > 1 ? "s" : ""} limit`,
+      `Valid for ${p.validityDays} day${p.validityDays > 1 ? "s" : ""}`
+    ];
+
+    return {
+      name: p.planName,
+      price: `₹${p.price.toLocaleString()}`,
+      period: p.planType === "DAILY" ? "/day" : "/mo",
+      tag: isGrowth ? "Most popular choice" : isStarter ? "For growing businesses" : "For 100+ business locations",
+      features,
+      tone: isGrowth ? "bg-gradient-brand text-white" : isEnterprise ? "bg-emerald-deep text-white" : "bg-white text-emerald-deep",
+      cta: `Start ${p.planName}`,
+      highlight: isGrowth,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-cream font-sans flex flex-col justify-between overflow-x-hidden">
       <div>
         <Navbar />
-        
+
         {/* Top Hero Banner */}
         <section className="pt-32 pb-14 bg-cream text-foreground relative border-b border-emerald-100/60">
           <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
@@ -109,27 +86,25 @@ export default function PricingPage() {
           <Blob className="absolute bottom-0 right-0 w-96 h-96 text-sunny/30" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            
+
             {/* Billing Basis Toggle (Monthly / Daily) */}
             <div className="flex justify-center mb-12">
               <div className="inline-flex bg-white p-1.5 rounded-2xl border border-emerald-100/80 shadow-float">
                 <button
                   onClick={() => setBillingBasis("monthly")}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    billingBasis === "monthly"
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${billingBasis === "monthly"
                       ? "bg-gradient-brand text-white shadow-glow"
                       : "text-emerald-deep hover:bg-cream"
-                  }`}
+                    }`}
                 >
                   Monthly Basis
                 </button>
                 <button
                   onClick={() => setBillingBasis("daily")}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    billingBasis === "daily"
+                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${billingBasis === "daily"
                       ? "bg-gradient-brand text-white shadow-glow"
                       : "text-emerald-deep hover:bg-cream"
-                  }`}
+                    }`}
                 >
                   Daily Basis
                 </button>
@@ -137,58 +112,77 @@ export default function PricingPage() {
             </div>
 
             {/* 3 Pricing Cards */}
-            <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-              {plans.map((p, i) => (
-                <motion.div
-                  key={p.name}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.1 }}
-                  className={`relative rounded-[36px] p-8 flex flex-col justify-between ${p.tone} ${
-                    p.highlight ? "shadow-glow md:-translate-y-4 scale-[1.02]" : "shadow-float"
-                  } transition hover:-translate-y-1`}
-                >
-                  {p.highlight && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-sunny text-emerald-deep text-xs font-black uppercase tracking-widest shadow-md">
-                      {p.tag}
+            {isLoading ? (
+              <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full col-span-full">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="rounded-[36px] p-8 bg-white border border-emerald-100/40 shadow-float space-y-6 animate-pulse">
+                    <div className="space-y-3">
+                      <div className="h-3 bg-cream-dark/30 rounded-lg w-1/4" />
+                      <div className="h-10 bg-cream-dark/30 rounded-2xl w-1/2" />
+                      <div className="h-3 bg-cream-dark/30 rounded-lg w-2/3" />
                     </div>
-                  )}
-
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">{p.name}</div>
-                    <div className="flex items-baseline gap-1">
-                      <div className="font-display font-black text-5xl">{p.price}</div>
-                      <div className="opacity-70 font-semibold">{p.period}</div>
+                    <hr className="border-cream" />
+                    <div className="space-y-3.5">
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-5/6" />
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-4/5" />
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-3/4" />
                     </div>
-                    <div className="text-xs opacity-80 mt-1">{p.tag}</div>
-
-                    <hr className="my-6 border-current opacity-15" />
-
-                    <ul className="space-y-3.5">
-                      {p.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-sm font-medium">
-                          <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 opacity-90" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="h-12 bg-cream-dark/30 rounded-full w-full mt-4" />
                   </div>
-
-                  <Link
-                    to="/contact"
-                    className={`mt-8 inline-flex w-full justify-center items-center gap-2 px-6 py-4 rounded-full font-bold transition ${
-                      p.highlight
-                        ? "bg-white text-emerald-deep hover:bg-cream"
-                        : "bg-gradient-sun text-emerald-deep hover:shadow-glow"
-                    }`}
+                ))}
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                {displayPlans.map((p, i) => (
+                  <motion.div
+                    key={p.name}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: i * 0.1 }}
+                    className={`relative rounded-[36px] p-8 flex flex-col justify-between ${p.tone} ${p.highlight ? "shadow-glow md:-translate-y-4 scale-[1.02]" : "shadow-float"
+                      } transition hover:-translate-y-1`}
                   >
-                    <span>{p.cta}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+                    {p.highlight && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-sunny text-emerald-deep text-xs font-black uppercase tracking-widest shadow-md">
+                        {p.tag}
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-widest opacity-70 mb-2">{p.name}</div>
+                      <div className="flex items-baseline gap-1">
+                        <div className="font-display font-black text-5xl">{p.price}</div>
+                        <div className="opacity-70 font-semibold">{p.period}</div>
+                      </div>
+                      <div className="text-xs opacity-80 mt-1">{p.tag}</div>
+
+                      <hr className="my-6 border-current opacity-15" />
+
+                      <ul className="space-y-3.5">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-start gap-2.5 text-sm font-medium">
+                            <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 opacity-90" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Link
+                      to="/contact"
+                      className={`mt-8 inline-flex w-full justify-center items-center gap-2 px-6 py-4 rounded-full font-bold transition ${p.highlight
+                          ? "bg-white text-emerald-deep hover:bg-cream"
+                          : "bg-gradient-sun text-emerald-deep hover:shadow-glow"
+                        }`}
+                    >
+                      <span>{p.cta}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             {/* No Refund Policy Notice Bar */}
             <div className="mt-12 p-6 rounded-3xl bg-white shadow-float border border-emerald-100/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">

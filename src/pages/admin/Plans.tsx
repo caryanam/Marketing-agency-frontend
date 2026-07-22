@@ -159,9 +159,8 @@ export default function AdminPlans() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2.5 rounded-xl font-bold text-xs cursor-pointer transition flex items-center gap-1.5 ${
-                  activeTab === tab ? "bg-white text-emerald-deep shadow-md" : "text-white/80 hover:text-white"
-                }`}
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs cursor-pointer transition flex items-center gap-1.5 ${activeTab === tab ? "bg-white text-emerald-deep shadow-md" : "text-white/80 hover:text-white"
+                  }`}
               >
                 {tab === "PLANS" && "Plans Creator"}
                 {tab === "SUBSCRIPTIONS" && "Client Rosters"}
@@ -182,8 +181,48 @@ export default function AdminPlans() {
       </div>
 
       {isLoading ? (
-        <div className="min-h-[300px] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand" />
+        <div className="space-y-6 animate-pulse">
+          {activeTab === "PLANS" ? (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="h-6 bg-cream-dark/30 rounded-lg w-48" />
+                <div className="h-10 bg-cream-dark/30 rounded-full w-40" />
+              </div>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="rounded-[28px] bg-white border border-cream shadow-float space-y-6 p-6">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-1/3" />
+                      <div className="h-6 bg-cream-dark/30 rounded-lg w-1/2" />
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-1/4" />
+                    </div>
+                    <hr className="border-cream" />
+                    <div className="space-y-3.5">
+                      <div className="h-3.5 bg-cream-dark/30 rounded-lg w-5/6" />
+                      <div className="h-3.5 bg-cream-dark/30 rounded-lg w-4/5" />
+                      <div className="h-3.5 bg-cream-dark/30 rounded-lg w-3/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-[28px] bg-white p-6 shadow-float border border-cream space-y-6">
+              <div className="h-5 bg-cream-dark/30 rounded-lg w-1/3" />
+              <div className="space-y-4 pt-4">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="flex gap-4 items-center">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-cream-dark/30 rounded-lg w-1/3" />
+                      <div className="h-3 bg-cream-dark/30 rounded-lg w-1/4" />
+                    </div>
+                    <div className="h-4 bg-cream-dark/30 rounded-lg w-20" />
+                    <div className="h-4 bg-cream-dark/30 rounded-lg w-24" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="relative z-10">
@@ -200,13 +239,12 @@ export default function AdminPlans() {
                 </button>
               </div>
 
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {plans.map((p) => (
                   <div
                     key={p.id}
-                    className={`rounded-[28px] bg-white border border-emerald-100 shadow-float overflow-hidden flex flex-col justify-between transition hover:border-emerald-200 ${
-                      !p.isActive ? "opacity-60" : ""
-                    }`}
+                    className={`rounded-[28px] bg-white border border-emerald-100 shadow-float overflow-hidden flex flex-col justify-between transition hover:border-emerald-200 ${!p.isActive ? "opacity-60" : ""
+                      }`}
                   >
                     <div className="p-6 bg-cream/40 relative border-b border-emerald-100/50">
                       <div className="flex justify-between items-start gap-4">
@@ -300,11 +338,10 @@ export default function AdminPlans() {
                           </td>
                           <td className="py-3.5">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                                s.subscriptionStatus === "ACTIVE"
-                                  ? "bg-brand/15 text-brand"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
+                              className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${s.subscriptionStatus === "ACTIVE"
+                                ? "bg-brand/15 text-brand"
+                                : "bg-muted text-muted-foreground"
+                                }`}
                             >
                               {s.subscriptionStatus}
                             </span>
@@ -351,7 +388,6 @@ export default function AdminPlans() {
                     <thead>
                       <tr className="border-b border-cream text-xs text-muted-foreground font-bold uppercase tracking-wider">
                         <th className="pb-3 pl-2">Client Details</th>
-                        <th className="pb-3">Reference / UTR</th>
                         <th className="pb-3">Amount</th>
                         <th className="pb-3">Date</th>
                         <th className="pb-3 text-right">Moderation Actions</th>
@@ -367,10 +403,6 @@ export default function AdminPlans() {
                           <tr key={p.id} className="text-xs sm:text-sm font-semibold text-emerald-deep hover:bg-cream/10 transition">
                             <td className="py-3.5 pl-2">
                               <div className="font-bold">{clientObj?.companyName || `Client #${sub?.clientId || ""}`}</div>
-                              <div className="text-[11px] text-muted-foreground font-medium">Plan: {planName}</div>
-                            </td>
-                            <td className="py-3.5 font-mono text-[11px] font-bold text-brand uppercase">
-                              {p.paymentReference}
                             </td>
                             <td className="py-3.5 font-extrabold text-emerald-deep">
                               ₹{p.amount.toLocaleString()}
@@ -397,7 +429,7 @@ export default function AdminPlans() {
                       })}
                       {pendingPayments.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground italic font-medium p-4">
+                          <td colSpan={4} className="py-8 text-center text-sm text-muted-foreground italic font-medium p-4">
                             <Inbox className="h-6 w-6 text-muted-foreground/45 mx-auto mb-2" />
                             All clear! No pending payments awaiting review.
                           </td>
@@ -416,7 +448,7 @@ export default function AdminPlans() {
                     <thead>
                       <tr className="border-b border-cream text-xs text-muted-foreground font-bold uppercase tracking-wider">
                         <th className="pb-3 pl-2">Client</th>
-                        <th className="pb-3">Reference / Plan</th>
+                        <th className="pb-3">Plan</th>
                         <th className="pb-3">Amount</th>
                         <th className="pb-3">Method</th>
                         <th className="pb-3">Status</th>
@@ -436,7 +468,6 @@ export default function AdminPlans() {
                               <div className="text-[11px] text-muted-foreground">{clientObj?.ownerName || "—"}</div>
                             </td>
                             <td className="py-3.5">
-                              <div className="font-mono text-[10px] font-bold text-muted-foreground">{p.paymentReference}</div>
                               <div className="text-[11px] font-bold">{planName}</div>
                             </td>
                             <td className="py-3.5 font-extrabold">
@@ -447,10 +478,9 @@ export default function AdminPlans() {
                             </td>
                             <td className="py-3.5">
                               <span
-                                className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                                  p.status === "APPROVED"
-                                    ? "bg-emerald-100 text-emerald-deep"
-                                    : p.status === "REJECTED"
+                                className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${p.status === "APPROVED"
+                                  ? "bg-emerald-100 text-emerald-deep"
+                                  : p.status === "REJECTED"
                                     ? "bg-red-100 text-red-600"
                                     : "bg-amber-100 text-amber-800"
                                   }`}
@@ -466,7 +496,7 @@ export default function AdminPlans() {
                       })}
                       {payments.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground italic font-medium p-4">
+                          <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground italic font-medium p-4">
                             No receipts found.
                           </td>
                         </tr>
@@ -631,7 +661,7 @@ export default function AdminPlans() {
                 placeholder={
                   modStatus === "APPROVED"
                     ? "e.g. Transaction verified. Subscription activated."
-                    : "e.g. UTR reference not found in bank statement."
+                    : "e.g. Payment receipt verification failed."
                 }
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
@@ -650,9 +680,8 @@ export default function AdminPlans() {
               <button
                 type="submit"
                 disabled={approveRejectPaymentMutation.isPending}
-                className={`px-6 py-3 rounded-2xl font-bold text-white shadow-glow hover:shadow-lg transition flex items-center gap-2 cursor-pointer text-sm ${
-                  modStatus === "APPROVED" ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600"
-                }`}
+                className={`px-6 py-3 rounded-2xl font-bold text-white shadow-glow hover:shadow-lg transition flex items-center gap-2 cursor-pointer text-sm ${modStatus === "APPROVED" ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600"
+                  }`}
               >
                 Confirm {modStatus === "APPROVED" ? "Approval" : "Rejection"}
               </button>

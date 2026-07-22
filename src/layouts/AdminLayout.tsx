@@ -172,7 +172,7 @@ export default function AdminLayout() {
         </Link>
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition"
+          className="lg:hidden p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition z-50 cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
