@@ -82,12 +82,59 @@ export function useClientCustomerData(clientId?: number | string) {
     enabled: !!clientId,
   });
 
+  const importExcelMutation = useMutation({
+    mutationFn: async ({
+      file,
+      clientId: targetClientId,
+      businessCategory,
+    }: {
+      file: File;
+      clientId: number | string;
+      businessCategory?: string;
+    }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("clientId", String(targetClientId));
+      if (businessCategory) {
+        formData.append("businessCategory", businessCategory);
+      }
+
+      const response = await clientAxios.post<ApiResponse<ExcelImportResponseDTO>>(
+        "/api/customer-data/import",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data && response.data.status === "SUCCESS" && response.data.data) {
+        return response.data.data;
+      }
+      throw new Error(response.data?.message || "Failed to import customer data.");
+    },
+    onSuccess: (result, variables) => {
+      toast.success(`Imported ${result.totalImported} contact(s) successfully!`);
+      queryClient.invalidateQueries({ queryKey: ["adminCustomerData", String(variables.clientId)] });
+      queryClient.invalidateQueries({ queryKey: ["clientCustomerData", String(variables.clientId)] });
+      queryClient.invalidateQueries({ queryKey: ["adminCustomerDataStats", String(variables.clientId)] });
+      queryClient.invalidateQueries({ queryKey: ["clientCustomerDataStats", String(variables.clientId)] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to import customer data.");
+    },
+  });
+
   return {
     customerData: customerDataQuery.data || [],
     isLoading: customerDataQuery.isLoading,
     isError: customerDataQuery.isError,
     error: customerDataQuery.error,
     refetch: customerDataQuery.refetch,
+    importExcel: importExcelMutation.mutateAsync,
+    isImporting: importExcelMutation.isPending,
+    importError: importExcelMutation.error,
   };
 }
 

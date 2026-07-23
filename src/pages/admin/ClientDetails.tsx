@@ -152,6 +152,32 @@ export default function AdminClientDetails() {
     }
   };
 
+  // Export Customer Data to CSV
+  const handleExportData = () => {
+    if (!customerData || customerData.length === 0) return;
+
+    const headers = ["ID", "Customer Name", "WhatsApp Number", "Business Category", "Created At"];
+    const csvRows = [
+      headers.join(","),
+      ...customerData.map(c => [
+        `"${c.id}"`,
+        `"${(c.customerName || "").replace(/"/g, '""')}"`,
+        `"${(c.whatsappNumber || "").replace(/"/g, '""')}"`,
+        `"${(c.businessCategory || client?.category || "").replace(/"/g, '""')}"`,
+        `"${c.createdAt || ""}"`
+      ].join(","))
+    ];
+
+    const blob = new window.Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${(client?.company || "Customer_Data").replace(/\s+/g, "_")}_Contacts.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Launch Campaign
   const handleLaunchCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,6 +469,16 @@ export default function AdminClientDetails() {
               </div>
 
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {customerData && customerData.length > 0 && (
+                  <button
+                    onClick={handleExportData}
+                    className="px-4 py-2.5 rounded-xl bg-teal-deep text-white hover:bg-emerald-800 font-bold transition text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title="Export Customer Contacts to CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Export Contacts ({customerData.length})
+                  </button>
+                )}
+
                 <a
                   href="/CustomerNumberData.xlsx"
                   download="CustomerNumberData.xlsx"
@@ -490,30 +526,30 @@ export default function AdminClientDetails() {
                         </a>
                       </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-cream">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCsvOpen(false);
-                          setExcelFile(null);
-                        }}
-                        className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={!excelFile || isExcelImporting}
-                        className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        {isExcelImporting ? "Importing..." : "Upload & Import"}
-                      </button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                      <div className="flex justify-end gap-3 pt-4 border-t border-cream">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCsvOpen(false);
+                            setExcelFile(null);
+                          }}
+                          className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!excelFile || isExcelImporting}
+                          className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {isExcelImporting ? "Importing..." : "Upload & Import"}
+                        </button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-          </div>
 
             {isCustomerDataLoading ? (
               <div className="grid md:grid-cols-2 gap-3 animate-pulse">

@@ -1,14 +1,36 @@
 import { motion } from "motion/react";
-import { useState } from "react";
-import { Search, Users, Tag, Phone, Calendar, Building, Download } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, Users, Tag, Phone, Calendar, Building, Download, Upload } from "lucide-react";
 import { useClientProfile } from "@/hooks/client/useClientProfile";
 import { useClientCustomerData, useClientCustomerDataStats } from "@/hooks/useCustomerData";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function ClientContacts() {
   const [q, setQ] = useState("");
+  const [isCsvOpen, setIsCsvOpen] = useState(false);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { client, isLoading: isProfileLoading } = useClientProfile();
-  const { customerData, isLoading: isDataLoading } = useClientCustomerData(client?.id);
+  const { customerData, isLoading: isDataLoading, importExcel, isImporting: isExcelImporting } = useClientCustomerData(client?.id);
   const { data: latestImportLog } = useClientCustomerDataStats(client?.id);
+
+  const handleExcelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!excelFile || !client?.id) return;
+
+    try {
+      await importExcel({
+        file: excelFile,
+        clientId: client.id,
+        businessCategory: client.category,
+      });
+      setIsCsvOpen(false);
+      setExcelFile(null);
+    } catch (err) {
+      // Error handled by hook toast
+    }
+  };
 
   const isLoading = isProfileLoading || isDataLoading;
 
@@ -32,13 +54,77 @@ export default function ClientContacts() {
           </p>
         </div>
 
-        <a
-          href="/CustomerNumberData.xlsx"
-          download="CustomerNumberData.xlsx"
-          className="px-4 py-2.5 rounded-2xl bg-cream hover:bg-emerald-50 border border-cream/50 text-emerald-deep font-bold transition text-xs flex items-center gap-2 cursor-pointer shadow-xs"
-        >
-          <Download className="h-4 w-4 text-brand" /> Download Sample Excel
-        </a>
+        <div className="flex items-center gap-3 flex-wrap">
+          <a
+            href="/CustomerNumberData.xlsx"
+            download="CustomerNumberData.xlsx"
+            className="px-4 py-2.5 rounded-2xl bg-cream hover:bg-emerald-50 border border-cream/50 text-emerald-deep font-bold transition text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+          >
+            <Download className="h-4 w-4 text-brand" /> Download Sample Excel
+          </a>
+
+          <Dialog open={isCsvOpen} onOpenChange={setIsCsvOpen}>
+            <DialogTrigger asChild>
+              <button className="px-5 py-2.5 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer flex items-center gap-1.5 shrink-0">
+                <Upload className="h-4 w-4" /> Import Excel Sheet
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
+              <DialogHeader>
+                <DialogTitle className="font-display font-black text-2xl text-emerald-deep">Import Customer Excel</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleExcelSubmit} className="space-y-5 mt-2">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-brand/30 hover:border-brand rounded-2xl p-6 text-center cursor-pointer bg-cream/40 transition flex flex-col items-center justify-center gap-2"
+                >
+                  <Upload className="h-8 w-8 text-brand" />
+                  <span className="text-sm font-semibold text-emerald-deep">
+                    {excelFile ? excelFile.name : "Click to select Excel sheet (.xlsx, .xls)"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Formats: .xlsx or .xls</span>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".xlsx,.xls"
+                    onChange={e => setExcelFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <a
+                    href="/CustomerNumberData.xlsx"
+                    download="CustomerNumberData.xlsx"
+                    className="text-xs font-bold text-brand hover:underline inline-flex items-center gap-1"
+                  >
+                    <Download className="h-3 w-3" /> Download Sample Format
+                  </a>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-cream">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCsvOpen(false);
+                      setExcelFile(null);
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!excelFile || isExcelImporting}
+                    className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isExcelImporting ? "Importing..." : "Upload & Import"}
+                  </button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -131,10 +217,10 @@ export default function ClientContacts() {
                 <div className="h-11 w-11 rounded-full bg-gradient-brand grid place-items-center text-white font-black text-sm shrink-0">
                   {c.customerName
                     ? c.customerName
-                        .split(" ")
-                        .map((p) => p[0])
-                        .slice(0, 2)
-                        .join("")
+                      .split(" ")
+                      .map((p) => p[0])
+                      .slice(0, 2)
+                      .join("")
                     : "C"}
                 </div>
                 <div className="min-w-[140px] flex-1">
