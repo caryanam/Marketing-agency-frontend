@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, Phone, Mail, MessageCircle, MapPin, TrendingUp, Users, Send, Calendar, Upload, Plus } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MessageCircle, MapPin, TrendingUp, Users, Send, Calendar, Upload, Plus, Download } from "lucide-react";
 import { CLIENTS, TEMPLATES } from "@/lib/admin-data";
 import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip } from "recharts";
 import { Blob } from "@/components/site/Decor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-import { useAdminClientDetails, useAdminClientUsage, useAdminClientCampaigns, useAdminClientSubscription } from "@/hooks/admin/useAdminClients";
+import { useAdminClientDetails, useAdminClientUsage, useAdminClientCampaigns, useAdminClientSubscription, useAdminCustomerData, useAdminCustomerDataStats } from "@/hooks/admin";
 import { useCreateCampaign } from "@/hooks/admin/useAdminCampaign";
+import { ExcelImportResponseDTO } from "@/hooks/useCustomerData";
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
   USED_CAR_DEALERS: "Used Car Dealers",
@@ -39,7 +40,7 @@ const perfData = [
   { d: "W5", v: 5100 }, { d: "W6", v: 7200 }, { d: "W7", v: 8400 }, { d: "W8", v: 9600 },
 ];
 
-const tabs = ["Overview", "Contacts", "Campaigns", "Plans"];
+const tabs = ["Contacts", "Campaigns", "Overview", "Plans"];
 
 const INITIAL_CONTACTS = [
   { name: "Ananya Sharma", phone: "+91 98100 12011", status: "Active" },
@@ -64,27 +65,28 @@ export default function AdminClientDetails() {
   const { data: usageData, isLoading: isUsageLoading } = useAdminClientUsage(id || "");
   const { data: campaignsData, isLoading: isCampaignsLoading, refetch: refetchCampaigns } = useAdminClientCampaigns(id || "");
   const { data: activeSub, isLoading: isActiveSubLoading, refetch: refetchSub } = useAdminClientSubscription(id || "");
-  
+  const { customerData, isLoading: isCustomerDataLoading, importExcel, isImporting: isExcelImporting } = useAdminCustomerData(id || "");
+  const { data: latestImportLog } = useAdminCustomerDataStats(id || "");
+
   const createCampaignMutation = useCreateCampaign();
 
   const msgPercent = usageData && usageData.totalMessagesAllowed ? Math.min(Math.round((usageData.messagesUsed / usageData.totalMessagesAllowed) * 100), 100) : 0;
   const campPercent = usageData && usageData.totalCampaignsAllowed ? Math.min(Math.round((usageData.campaignsUsed / usageData.totalCampaignsAllowed) * 100), 100) : 0;
 
   const [client, setClient] = useState<any>(null);
-  const [tab, setTab] = useState("Overview");
+  const [tab, setTab] = useState("Contacts");
 
   // Contacts and Campaigns States
-  const [contacts, setContacts] = useState(INITIAL_CONTACTS);
   const [campaigns, setCampaigns] = useState(INITIAL_CAMPAIGNS);
-  const [contactsCount, setContactsCount] = useState(12450);
 
   // Dialog Controls
   const [isCsvOpen, setIsCsvOpen] = useState(false);
   const [isCampOpen, setIsCampOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // CSV Import Form States
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+  // Excel Import Form States
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [importResult, setImportResult] = useState<ExcelImportResponseDTO | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Campaign Form States
@@ -131,21 +133,23 @@ export default function AdminClientDetails() {
 
   const approvedTemplates = TEMPLATES.filter(t => t.status === "Approved");
 
-  // CSV Import Simulator
-  const handleCsvSubmit = (e: React.FormEvent) => {
+  // Excel Import Handler
+  const handleExcelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!csvFile) return;
+    if (!excelFile || !id) return;
 
-    const importedContacts = [
-      { name: "Amit Kumar (CSV)", phone: "+91 99000 88201", status: "Active" },
-      { name: "Neha Singh (CSV)", phone: "+91 99000 88202", status: "Active" },
-      { name: "Rajesh Varma (CSV)", phone: "+91 99000 88203", status: "Active" },
-    ];
-
-    setContacts(prev => [...importedContacts, ...prev]);
-    setContactsCount(prev => prev + importedContacts.length);
-    setIsCsvOpen(false);
-    setCsvFile(null);
+    try {
+      const result = await importExcel({
+        file: excelFile,
+        clientId: id,
+        businessCategory: client?.category,
+      });
+      setImportResult(result);
+      setIsCsvOpen(false);
+      setExcelFile(null);
+    } catch (e) {
+      // Error handled by hook toast
+    }
   };
 
   // Launch Campaign
@@ -199,7 +203,7 @@ export default function AdminClientDetails() {
     return (
       <div className="space-y-6 font-sans animate-pulse">
         <div className="h-4 bg-cream-dark/30 rounded-lg w-24" />
-        
+
         {/* Cover Skeleton */}
         <div className="rounded-[36px] h-56 bg-cream-dark/30 relative overflow-hidden shadow-glow" />
 
@@ -304,10 +308,11 @@ export default function AdminClientDetails() {
         </div>
       </div>
 
-      {/* Analytics (No Revenue metrics, 3 columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* Analytics (4 columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
-          { l: "Campaigns Run", v: usageData ? usageData.campaignsUsed : 0, tone: "bg-white text-emerald-deep" },
+          { l: "Total Contacts", v: isCustomerDataLoading ? "..." : customerData.length.toLocaleString(), tone: "bg-gradient-brand text-white" },
+          { l: "Campaigns Run", v: usageData ? usageData.campaignsUsed : 0, tone: "bg-white text-emerald-deep border border-cream" },
           { l: "Messages Sent", v: usageData ? usageData.messagesUsed : 0, tone: "bg-teal-deep text-white" },
           { l: "Remaining Messages", v: usageData ? `${usageData.remainingMessages} / ${usageData.totalMessagesAllowed}` : "N/A", tone: "bg-sky-soft text-emerald-deep" },
         ].map((k, i) => (
@@ -402,44 +407,95 @@ export default function AdminClientDetails() {
 
         {tab === "Contacts" && (
           <div className="mt-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-cream/50 p-4 rounded-2xl border border-cream">
-              <span className="text-xs text-muted-foreground font-bold text-center sm:text-left">Import CSV list to quickly sync customer data</span>
+            {latestImportLog && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+                <div className="font-bold text-sm flex items-center justify-between">
+                  <span>Last Import Summary</span>
+                  {latestImportLog.importedAt && (
+                    <span className="text-[11px] font-normal text-emerald-700">
+                      {new Date(latestImportLog.importedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs flex flex-wrap gap-4 text-emerald-800">
+                  <span>Read: <strong>{latestImportLog.totalRowsRead}</strong></span>
+                  <span>Imported: <strong>{latestImportLog.totalImported}</strong></span>
+                  <span>Skipped Duplicates: <strong>{latestImportLog.skippedDuplicateRows}</strong></span>
+                  <span>Invalid: <strong>{latestImportLog.skippedInvalidRows}</strong></span>
+                  {latestImportLog.skippedEmptyRows > 0 && <span>Empty Rows: <strong>{latestImportLog.skippedEmptyRows}</strong></span>}
+                </div>
+              </div>
+            )}
 
-              <Dialog open={isCsvOpen} onOpenChange={setIsCsvOpen}>
-                <DialogTrigger asChild>
-                  <button className="px-5 py-2.5 rounded-xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer flex items-center gap-1.5">
-                    <Upload className="h-3.5 w-3.5" /> Import CSV
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
-                  <DialogHeader>
-                    <DialogTitle className="font-display font-black text-2xl text-emerald-deep">Import Contacts CSV</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCsvSubmit} className="space-y-5 mt-2">
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-brand/30 hover:border-brand rounded-2xl p-6 text-center cursor-pointer bg-cream/40 transition flex flex-col items-center justify-center gap-2"
-                    >
-                      <Upload className="h-8 w-8 text-brand" />
-                      <span className="text-sm font-semibold text-emerald-deep">
-                        {csvFile ? csvFile.name : "Click to select contacts CSV"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">Supported format: .csv</span>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept=".csv"
-                        onChange={e => setCsvFile(e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-cream/50 p-4 rounded-2xl border border-cream">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-emerald-deep block">
+                    Import Excel sheet (.xlsx / .xls) to sync customer data
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-brand/15 text-brand text-[11px] font-black">
+                    {customerData.length.toLocaleString()} Total Contacts
+                  </span>
+                </div>
+                <span className="text-[11px] text-muted-foreground block mt-0.5">
+                  Column 1: Customer Name | Column 2: WhatsApp Number
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <a
+                  href="/CustomerNumberData.xlsx"
+                  download="CustomerNumberData.xlsx"
+                  className="px-4 py-2.5 rounded-xl bg-white border border-emerald-200 text-emerald-deep hover:bg-emerald-50 font-bold transition text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Download className="h-3.5 w-3.5 text-brand" /> Download Sample Excel
+                </a>
+
+                <Dialog open={isCsvOpen} onOpenChange={setIsCsvOpen}>
+                  <DialogTrigger asChild>
+                    <button className="px-5 py-2.5 rounded-xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer flex items-center gap-1.5 shrink-0">
+                      <Upload className="h-3.5 w-3.5" /> Import Excel Sheet
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
+                    <DialogHeader>
+                      <DialogTitle className="font-display font-black text-2xl text-emerald-deep">Import Customer Excel</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleExcelSubmit} className="space-y-5 mt-2">
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-brand/30 hover:border-brand rounded-2xl p-6 text-center cursor-pointer bg-cream/40 transition flex flex-col items-center justify-center gap-2"
+                      >
+                        <Upload className="h-8 w-8 text-brand" />
+                        <span className="text-sm font-semibold text-emerald-deep">
+                          {excelFile ? excelFile.name : "Click to select Excel sheet (.xlsx, .xls)"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">Formats: .xlsx or .xls</span>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept=".xlsx,.xls"
+                          onChange={e => setExcelFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <a
+                          href="/CustomerNumberData.xlsx"
+                          download="CustomerNumberData.xlsx"
+                          className="text-xs font-bold text-brand hover:underline inline-flex items-center gap-1"
+                        >
+                          <Download className="h-3 w-3" /> Download Sample Format
+                        </a>
+                      </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-cream">
                       <button
                         type="button"
                         onClick={() => {
                           setIsCsvOpen(false);
-                          setCsvFile(null);
+                          setExcelFile(null);
                         }}
                         className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
                       >
@@ -447,31 +503,46 @@ export default function AdminClientDetails() {
                       </button>
                       <button
                         type="submit"
-                        disabled={!csvFile}
+                        disabled={!excelFile || isExcelImporting}
                         className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
-                        Upload & Sync
+                        {isExcelImporting ? "Importing..." : "Upload & Import"}
                       </button>
                     </div>
                   </form>
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
-              {contacts.map((c, i) => (
-                <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl bg-cream border border-cream/35">
-                  <div className="h-10 w-10 rounded-full bg-gradient-brand grid place-items-center text-white font-bold">
-                    {c.name.split(" ").map(n => n[0]).join("")}
+            {isCustomerDataLoading ? (
+              <div className="grid md:grid-cols-2 gap-3 animate-pulse">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-16 rounded-2xl bg-cream/60" />
+                ))}
+              </div>
+            ) : customerData.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-3">
+                {customerData.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 p-3.5 rounded-2xl bg-cream border border-cream/35">
+                    <div className="h-10 w-10 rounded-full bg-gradient-brand grid place-items-center text-white font-bold shrink-0">
+                      {c.customerName ? c.customerName.split(" ").map(n => n[0]).slice(0, 2).join("") : "C"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-emerald-deep truncate">{c.customerName}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 font-mono">{c.whatsappNumber}</div>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-brand/15 text-brand font-bold shrink-0 uppercase">
+                      {c.businessCategory || client?.category || "CUSTOMER"}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-emerald-deep truncate">{c.name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{c.phone}</div>
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-brand/15 text-brand font-bold shrink-0">Active</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-cream/30 rounded-2xl border border-cream text-muted-foreground text-sm">
+                No customer data imported for this client yet.
+              </div>
+            )}
           </div>
         )}
 
@@ -538,9 +609,8 @@ export default function AdminClientDetails() {
                         <Send className="h-3 w-3" /> {(c.messagesSent ?? 0).toLocaleString()} sent
                       </div>
                     </div>
-                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                      c.campaignStatus === "RUNNING" ? "bg-brand text-white" : "bg-teal-deep text-white"
-                    }`}>
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold ${c.campaignStatus === "RUNNING" ? "bg-brand text-white" : "bg-teal-deep text-white"
+                      }`}>
                       {c.campaignStatus}
                     </span>
                   </div>

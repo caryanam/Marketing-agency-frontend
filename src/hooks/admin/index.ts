@@ -4,5 +4,6 @@ export * from "./useAdminEnquiries";
 export * from "./useAdminFeedback";
 export * from "./useAdminSubscription";
 export * from "./useAdminCampaign";
+export * from "../useCustomerData";
 
 

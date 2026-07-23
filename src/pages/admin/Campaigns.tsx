@@ -8,18 +8,11 @@ import {
   MessageCircle,
   Plus,
   Play,
-  Pause,
-  StopCircle,
-  PlayCircle,
-  Users,
 } from "lucide-react";
 import {
   useAdminCampaigns,
   useCreateCampaign,
   useRunCampaign,
-  usePauseCampaign,
-  useResumeCampaign,
-  useStopCampaign,
 } from "@/hooks/admin/useAdminCampaign";
 import { useAdminClients } from "@/hooks/admin/useAdminClients";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -30,9 +23,6 @@ export default function AdminCampaigns() {
 
   const createCampaignMutation = useCreateCampaign();
   const runCampaignMutation = useRunCampaign();
-  const pauseCampaignMutation = usePauseCampaign();
-  const resumeCampaignMutation = useResumeCampaign();
-  const stopCampaignMutation = useStopCampaign();
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -74,20 +64,6 @@ export default function AdminCampaigns() {
     setIsRunOpen(false);
   };
 
-  const handlePause = async (id: number) => {
-    await pauseCampaignMutation.mutateAsync(id);
-  };
-
-  const handleResume = async (id: number) => {
-    await resumeCampaignMutation.mutateAsync(id);
-  };
-
-  const handleStop = async (id: number) => {
-    if (window.confirm("Are you sure you want to stop this campaign completely? This action cannot be undone.")) {
-      await stopCampaignMutation.mutateAsync(id);
-    }
-  };
-
   const isLoading = isCampaignsLoading || isClientsLoading;
 
   return (
@@ -99,7 +75,7 @@ export default function AdminCampaigns() {
           <div>
             <div className="text-white/80 text-xs uppercase tracking-widest font-bold">Campaigns Control</div>
             <h1 className="mt-2 font-display font-black text-3xl md:text-4xl">WhatsApp Campaigns</h1>
-            <p className="mt-2 text-white/80 max-w-lg">Track campaign deliveries, dispatch messages, and control states in real time.</p>
+            <p className="mt-2 text-white/80 max-w-lg font-medium">Track campaign deliveries, dispatch messages, and manage campaigns in real time.</p>
           </div>
 
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -227,53 +203,22 @@ export default function AdminCampaigns() {
                             ? "bg-brand text-white"
                             : c.campaignStatus === "CREATED"
                             ? "bg-sunny text-emerald-deep"
-                            : c.campaignStatus === "PAUSED"
-                            ? "bg-amber-500 text-white"
                             : "bg-teal-deep text-white"
                         }`}
                       >
                         {c.campaignStatus}
                       </span>
 
-                      {/* State Action Buttons */}
-                      <div className="flex items-center gap-1.5 bg-cream/70 p-1 rounded-xl border border-cream">
-                        {c.campaignStatus !== "RUNNING" && c.campaignStatus !== "COMPLETED" && c.campaignStatus !== "STOPPED" && (
-                          <button
-                            onClick={() => handleOpenRun(c.id)}
-                            className="p-1.5 rounded-lg bg-white border border-emerald-100 hover:bg-emerald-50 text-emerald-deep cursor-pointer flex items-center gap-1 font-bold text-[10px] shadow-xs"
-                            title="Run Campaign"
-                          >
-                            <Play className="h-3 w-3" /> Run
-                          </button>
-                        )}
-                        {c.campaignStatus === "RUNNING" && (
-                          <button
-                            onClick={() => handlePause(c.id)}
-                            className="p-1.5 rounded-lg bg-white border border-amber-100 hover:bg-amber-50 text-amber-600 cursor-pointer flex items-center gap-1 font-bold text-[10px] shadow-xs"
-                            title="Pause Campaign"
-                          >
-                            <Pause className="h-3 w-3" /> Pause
-                          </button>
-                        )}
-                        {c.campaignStatus === "PAUSED" && (
-                          <button
-                            onClick={() => handleResume(c.id)}
-                            className="p-1.5 rounded-lg bg-white border border-emerald-100 hover:bg-emerald-50 text-emerald-deep cursor-pointer flex items-center gap-1 font-bold text-[10px] shadow-xs"
-                            title="Resume Campaign"
-                          >
-                            <PlayCircle className="h-3 w-3" /> Resume
-                          </button>
-                        )}
-                        {c.campaignStatus !== "COMPLETED" && c.campaignStatus !== "STOPPED" && (
-                          <button
-                            onClick={() => handleStop(c.id)}
-                            className="p-1.5 rounded-lg bg-white border border-red-100 hover:bg-red-50 text-red-500 cursor-pointer flex items-center gap-1 font-bold text-[10px] shadow-xs"
-                            title="Stop Campaign"
-                          >
-                            <StopCircle className="h-3 w-3" /> Stop
-                          </button>
-                        )}
-                      </div>
+                      {/* Run Action Button */}
+                      {c.campaignStatus !== "RUNNING" && c.campaignStatus !== "COMPLETED" && (
+                        <button
+                          onClick={() => handleOpenRun(c.id)}
+                          className="px-3 py-1.5 rounded-xl bg-gradient-brand text-white font-bold text-xs shadow-glow hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
+                          title="Run Campaign"
+                        >
+                          <Play className="h-3.5 w-3.5" /> Run Campaign
+                        </button>
+                      )}
                     </div>
                   </div>
 

@@ -1,12 +1,13 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Filter, Phone, Mail, MessageCircle, TrendingUp, ArrowUpRight, Plus, Eye, EyeOff, User, Building2, Calendar, RefreshCw } from "lucide-react";
+import { Search, Filter, Phone, Mail, MessageCircle, TrendingUp, ArrowUpRight, Plus, Eye, EyeOff, User, Building2, Calendar, RefreshCw, Upload, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
 
-import { useAdminClients } from "@/hooks/admin/useAdminClients";
+import { useAdminClients, useAdminCustomerData, useAdminCustomerDataStats } from "@/hooks/admin";
 import { useClientAuth } from "@/hooks/auth/useClientAuth";
+import { ExcelImportResponseDTO } from "@/hooks/useCustomerData";
 
 const CATS = ["All", "Used Car Dealers", "Car Showrooms", "Hospitals", "Garages", "Real Estate", "Insurance Agents", "Finance Companies", "Schools And Colleges", "Hotels And Restaurants"];
 
@@ -23,6 +24,7 @@ const REVERSE_CATEGORY_MAP: Record<string, string> = {
 };
 
 const TONES = [
+
   "from-brand to-teal-deep",
   "from-sky-soft to-brand",
   "from-emerald-deep to-brand",
@@ -45,12 +47,39 @@ const CATEGORY_EMOJIS: Record<string, string> = {
 };
 
 export default function AdminClients() {
+  const navigate = useNavigate();
   const { clients: apiClients, isLoading, refetch } = useAdminClients();
   const clientAuth = useClientAuth();
 
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [isOpen, setIsOpen] = useState(false);
+
+  // Import Contacts Modal State
+  const [importClient, setImportClient] = useState<{ id: string; category?: string; company: string } | null>(null);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [isImportDone, setIsImportDone] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { importExcel, isImporting: isExcelImporting } = useAdminCustomerData(importClient?.id || "");
+  const { data: latestImportLog } = useAdminCustomerDataStats(importClient?.id || "");
+
+  const handleExcelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!excelFile || !importClient) return;
+
+    try {
+      await importExcel({
+        file: excelFile,
+        clientId: importClient.id,
+        businessCategory: importClient.category,
+      });
+      setIsImportDone(true);
+      setExcelFile(null);
+    } catch (err) {
+      // Error handled by hook toast
+    }
+  };
 
   // Form states (aligned with Registration)
   const [fullName, setFullName] = useState("");
@@ -374,7 +403,7 @@ export default function AdminClients() {
           </p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2  gap-5">
           <AnimatePresence initial={false}>
             {filtered.map((c, i) => (
               <motion.div
@@ -404,22 +433,24 @@ export default function AdminClients() {
                     </span>
                   </div>
 
-                  <div className="relative mt-5 space-y-2 text-xs">
-                    <div className="flex items-center gap-2 text-slate-700 min-w-0">
-                      <Phone className="h-3.5 w-3.5 text-brand shrink-0" />
-                      <span className="font-semibold truncate">{c.phone}</span>
+                  <div className="relative mt-4 space-y-2 text-xs">
+                    <div className="flex items-center gap-4 flex-wrap text-slate-700 font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Phone className="h-3.5 w-3.5 text-brand shrink-0" />
+                        <span className="truncate">{c.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <MessageCircle className="h-3.5 w-3.5 text-emerald-800 shrink-0" />
+                        <span className="truncate">{c.whatsapp}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-700 min-w-0">
-                      <MessageCircle className="h-3.5 w-3.5 text-emerald-800 shrink-0" />
-                      <span className="font-semibold truncate">{c.whatsapp}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-700 min-w-0">
+                    <div className="flex items-center gap-1.5 text-slate-700 min-w-0 font-semibold">
                       <Mail className="h-3.5 w-3.5 text-brand shrink-0" />
-                      <span className="font-semibold truncate">{c.email}</span>
+                      <span className="truncate">{c.email}</span>
                     </div>
                   </div>
 
-                  <div className="relative mt-5 grid grid-cols-2 gap-3">
+                  <div className="relative mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-2xl bg-cream p-3">
                       <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Registered</div>
                       <div className="font-black text-emerald-deep text-xs mt-1 flex items-center gap-1">
@@ -435,11 +466,17 @@ export default function AdminClients() {
                   </div>
                 </div>
 
-                <div className="relative mt-5 pt-3 border-t border-cream flex items-center justify-between">
-                  <div className="text-xs text-brand font-bold flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> Active Client
-                  </div>
-                  <Link to={`/admin/clients/${c.id}`} className="text-xs font-black text-emerald-deep inline-flex items-center gap-1 hover:text-brand transition cursor-pointer">
+                <div className="relative mt-5 pt-3 border-t border-cream flex items-center justify-between gap-2 flex-wrap">
+                  <button
+                    onClick={() => setImportClient({ id: c.id, category: c.rawCategory || c.category, company: c.company })}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-brand text-white text-xs font-bold shadow-glow hover:shadow-lg transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Upload className="h-3.5 w-3.5" /> Import Contacts
+                  </button>
+                  <Link
+                    to={`/admin/clients/${c.id}`}
+                    className="text-xs font-black text-emerald-deep inline-flex items-center gap-1 hover:text-brand transition cursor-pointer"
+                  >
                     View Details <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -448,6 +485,116 @@ export default function AdminClients() {
           </AnimatePresence>
         </div>
       )}
+
+      {/* IMPORT CONTACTS MODAL FOR SELECTED CLIENT */}
+      <Dialog
+        open={!!importClient}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImportClient(null);
+            setExcelFile(null);
+            setIsImportDone(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-2xl text-emerald-deep">
+              Import Customer Excel
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1 font-semibold">
+              Client: <span className="text-emerald-deep font-bold">{importClient?.company}</span> (#{importClient?.id})
+            </p>
+          </DialogHeader>
+
+          {isImportDone && latestImportLog ? (
+            <div className="space-y-4 mt-2">
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2">
+                <div className="font-bold text-sm flex items-center justify-between">
+                  <span>Import Summary Result</span>
+                  {latestImportLog.importedAt && (
+                    <span className="text-[10px] font-normal text-emerald-700">
+                      {new Date(latestImportLog.importedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs space-y-1 text-emerald-800 font-medium">
+                  <div>Total Rows Read: <strong>{latestImportLog.totalRowsRead}</strong></div>
+                  <div>Successfully Imported: <strong>{latestImportLog.totalImported}</strong></div>
+                  <div>Skipped Duplicates: <strong>{latestImportLog.skippedDuplicateRows}</strong></div>
+                  <div>Skipped Invalid: <strong>{latestImportLog.skippedInvalidRows}</strong></div>
+                  {latestImportLog.skippedEmptyRows > 0 && <div>Skipped Empty Rows: <strong>{latestImportLog.skippedEmptyRows}</strong></div>}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetId = importClient?.id;
+                    setImportClient(null);
+                    setIsImportDone(false);
+                    if (targetId) navigate(`/admin/clients/${targetId}`);
+                  }}
+                  className="w-full px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  View Details & Contacts <ArrowUpRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleExcelSubmit} className="space-y-5 mt-2">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-brand/30 hover:border-brand rounded-2xl p-6 text-center cursor-pointer bg-cream/40 transition flex flex-col items-center justify-center gap-2"
+              >
+                <Upload className="h-8 w-8 text-brand" />
+                <span className="text-sm font-semibold text-emerald-deep">
+                  {excelFile ? excelFile.name : "Click to select Excel sheet (.xlsx, .xls)"}
+                </span>
+                <span className="text-xs text-muted-foreground">Formats: .xlsx or .xls</span>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".xlsx,.xls"
+                  onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <a
+                  href="/CustomerNumberData.xlsx"
+                  download="CustomerNumberData.xlsx"
+                  className="text-xs font-bold text-brand hover:underline inline-flex items-center gap-1"
+                >
+                  <Download className="h-3 w-3" /> Download Sample Format
+                </a>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-cream">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportClient(null);
+                    setExcelFile(null);
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!excelFile || isExcelImporting}
+                  className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isExcelImporting ? "Importing..." : "Upload & Import"}
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
