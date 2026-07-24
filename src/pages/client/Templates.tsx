@@ -1,62 +1,81 @@
 import { motion } from "motion/react";
-import { LayoutTemplate, CheckCircle2, Clock, Plus, MessageCircle } from "lucide-react";
-
-const TEMPLATES = [
-  { name: "Welcome Message", category: "Onboarding", lang: "English", status: "Approved", uses: 1220, preview: "Hi {{name}}! Welcome to our family. Get 10% off your first order with code WELCOME10." },
-  { name: "Order Confirmation", category: "Transactional", lang: "English + Hindi", status: "Approved", uses: 2410, preview: "Hi {{name}}, your order #{{orderId}} is confirmed. We'll notify you once it ships." },
-  { name: "Festive Offer", category: "Marketing", lang: "English + Regional", status: "Approved", uses: 3320, preview: "🎉 Festive Sale is LIVE! Flat 30% off on our new collection. Shop now: {{link}}" },
-  { name: "Cart Abandonment", category: "Marketing", lang: "English", status: "Approved", uses: 812, preview: "You left something behind! Complete your order in the next 24 hours and get free shipping." },
-  { name: "Appointment Reminder", category: "Utility", lang: "English", status: "Approved", uses: 940, preview: "Reminder: Your appointment is scheduled for {{date}} at {{time}}. Reply YES to confirm." },
-  { name: "Diwali Special", category: "Marketing", lang: "English + Hindi", status: "Pending", uses: 0, preview: "Wishing you a bright Diwali! Enjoy 40% off site-wide until midnight. Use code DIWALI40." },
-];
+import { LayoutTemplate, CheckCircle2, MessageCircle, Image as ImageIcon } from "lucide-react";
+import { useWhatsAppTemplates } from "@/hooks/useWhatsAppTemplates";
+import { WhatsAppTemplate } from "@/lib/templates-data";
 
 export default function ClientTemplates() {
+  const { data: templates = [], isLoading } = useWhatsAppTemplates();
+
+  const renderPreview = (t: WhatsAppTemplate) => {
+    let text = t.bodyTemplate || "";
+    t.variables?.forEach((v, index) => {
+      const val = v.defaultValue || `[${v.label}]`;
+      text = text.replace(new RegExp(`\\{\\{${index + 1}\\}\\}`, "g"), val);
+    });
+    return text;
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-[28px] bg-white p-6 shadow-float flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-bold uppercase tracking-widest text-brand">WhatsApp</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-brand">WhatsApp Cloud API</div>
           <h1 className="font-display font-black text-3xl text-emerald-deep">Message Templates</h1>
-          <p className="text-sm text-muted-foreground mt-1">Reusable, Meta-approved WhatsApp templates for every use case.</p>
+          <p className="text-sm text-muted-foreground mt-1">Available Meta-approved WhatsApp Cloud API message templates for your marketing campaigns.</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm shadow-glow hover:shadow-lg transition">
-          <Plus className="h-4 w-4" /> Request Template
-        </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-5">
-        {TEMPLATES.map((t, i) => (
-          <motion.div key={t.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className="rounded-[28px] bg-white p-6 shadow-float">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-sun grid place-items-center text-emerald-deep shrink-0">
-                  <LayoutTemplate className="h-5 w-5" />
+      {isLoading ? (
+        <div className="grid md:grid-cols-2 gap-5 animate-pulse">
+          {[1, 2, 3, 4].map(n => (
+            <div key={n} className="rounded-[28px] bg-white p-6 shadow-float space-y-4">
+              <div className="h-10 bg-cream-dark/30 rounded-xl w-1/2" />
+              <div className="h-20 bg-cream-dark/20 rounded-2xl" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-5">
+          {templates.map((t, i) => (
+            <motion.div key={t.id || i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className="rounded-[28px] bg-white p-6 shadow-float flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-3 items-center">
+                    <div className="h-11 w-11 rounded-2xl bg-gradient-sun grid place-items-center text-emerald-deep shrink-0 font-bold">
+                      #{t.id}
+                    </div>
+                    <div>
+                      <div className="font-display font-black text-lg text-emerald-deep">{t.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 font-semibold">
+                        {t.headerType === "IMAGE" ? <ImageIcon className="h-3 w-3 text-brand" /> : <LayoutTemplate className="h-3 w-3 text-brand" />}
+                        {t.category} · {t.headerType === "IMAGE" ? "Image Header" : "Text Only"}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-brand/15 text-brand">
+                    <CheckCircle2 className="h-3 w-3" /> Approved
+                  </span>
                 </div>
-                <div>
-                  <div className="font-display font-black text-lg text-emerald-deep">{t.name}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{t.category} · {t.lang}</div>
+
+                <div className="mt-4 rounded-2xl bg-[#efeae2] p-4 relative border border-[#e0dcd5]">
+                  <MessageCircle className="absolute top-3 right-3 h-4 w-4 text-emerald-600/40" />
+                  <div className="bg-[#d9fdd3] text-zinc-900 p-3 rounded-2xl rounded-tr-none text-xs leading-relaxed shadow-xs">
+                    {t.headerType === "IMAGE" && t.defaultHeaderUrl && (
+                      <img src={t.defaultHeaderUrl} alt="Header" className="w-full h-24 object-cover rounded-xl mb-2" />
+                    )}
+                    <div className="whitespace-pre-wrap font-medium text-slate-800">{renderPreview(t)}</div>
+                  </div>
                 </div>
               </div>
-              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                t.status === "Approved" ? "bg-brand text-white" : "bg-sunny text-emerald-deep"
-              }`}>
-                {t.status === "Approved" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                {t.status}
-              </span>
-            </div>
 
-            <div className="mt-4 rounded-2xl bg-cream p-4 relative">
-              <MessageCircle className="absolute top-3 right-3 h-4 w-4 text-brand/40" />
-              <p className="text-sm text-emerald-deep leading-relaxed pr-8">{t.preview}</p>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-xs text-muted-foreground">Used <span className="font-bold text-emerald-deep">{t.uses.toLocaleString()}</span> times</div>
-              <button className="text-xs font-bold text-brand hover:text-emerald-deep transition">Use Template →</button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+              <div className="mt-4 pt-3 border-t border-cream flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                <span>{t.variables?.length || 0} Dynamic Variables</span>
+                <span className="text-brand font-bold">Ready for Campaign</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,49 +1,81 @@
 import { motion } from "motion/react";
-import { LayoutTemplate, LayoutGrid, List } from "lucide-react";
-import { TEMPLATES } from "@/lib/admin-data";
-import { useState, useEffect } from "react";
-
-const TEMPLATE_CONTENT: Record<number, { body: string; preview: string; mediaUrl?: string }> = {
-  1: {
-    body: "Hi {{1}}, thanks for reaching out to {{2}}. Reply YES to know more about our latest offers 🎉",
-    preview: "Hi Rohan Malhotra, thanks for reaching out to AutoZone Motors. Reply YES to know more about our latest offers 🎉"
-  },
-  2: {
-    body: "Hello {{1}}! Your test drive for {{2}} at {{3}} is confirmed for {{4}}. Please bring your valid driving license.",
-    preview: "Hello Aditya! Your test drive for Thar LX at AutoZone Motors is confirmed for Sunday, 4 PM. Please bring your valid driving license.",
-    mediaUrl: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=400&auto=format&fit=crop&q=60"
-  },
-  3: {
-    body: "Dear {{1}}, this is a reminder for your upcoming appointment at {{2}} on {{3}} at {{4}}. To reschedule, reply to this message.",
-    preview: "Dear Priya Nair, this is a reminder for your upcoming appointment at GreenLeaf Hospitals on July 20th at 10:30 AM. To reschedule, reply to this message."
-  },
-  4: {
-    body: "Hi {{1}}! Thank you for scheduling a site visit to {{2}} on {{3}}. Our sales executive {{4}} will call you shortly.",
-    preview: "Hi Amit! Thank you for scheduling a site visit to Sharma Realty Green Vista on Saturday. Our sales executive Aditya Sharma will call you shortly."
-  },
-  5: {
-    body: "✨ Festive Sale is Live! Hi {{1}}, enjoy up to {{2}}% off on {{3}} at {{4}}. Limited time offer, click below to shop now!",
-    preview: "✨ Festive Sale is Live! Hi Deepa, enjoy up to 30% off on premium packages at Caryanam. Limited time offer, click below to shop now!",
-    mediaUrl: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=400&auto=format&fit=crop&q=60"
-  },
-  6: {
-    body: "Success! We have received your payment of ₹{{1}} for invoice {{2}}. Thank you for choosing {{3}}.",
-    preview: "Success! We have received your payment of ₹45,000 for invoice #INV-9281. Thank you for choosing Delta Finance."
-  }
-};
+import { LayoutTemplate, LayoutGrid, List, Plus, Sparkles, Image as ImageIcon, CheckCircle2, Upload } from "lucide-react";
+import { useState, useRef } from "react";
+import { useWhatsAppTemplates, useCreateWhatsAppTemplate } from "@/hooks/useWhatsAppTemplates";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { WhatsAppTemplate } from "@/lib/templates-data";
 
 export default function AdminTemplates() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: templates = [], isLoading } = useWhatsAppTemplates();
+  const createTemplateMutation = useCreateWhatsAppTemplate();
+  const imageUploadMutation = useImageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const approvedTemplates = TEMPLATES.filter((t) => t.status === "Approved");
+  // Create Form State
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<"MARKETING" | "UTILITY">("MARKETING");
+  const [headerType, setHeaderType] = useState<"IMAGE" | "TEXT">("IMAGE");
+  const [defaultHeaderUrl, setDefaultHeaderUrl] = useState("");
+  const [bodyTemplate, setBodyTemplate] = useState("");
+  const [variable1Label, setVariable1Label] = useState("Customer Name");
+  const [variable2Label, setVariable2Label] = useState("Offer Details");
+  const [variable3Label, setVariable3Label] = useState("Validity Date");
+
+  const handleHeaderImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await imageUploadMutation.mutateAsync(file);
+      setDefaultHeaderUrl(dataUrl);
+    } catch (err) {
+      // Error handled by hook toast
+    }
+  };
+
+  const handleCreateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !bodyTemplate.trim()) return;
+
+    const variables = [
+      { name: "var1", label: variable1Label || "Customer Name", placeholder: "e.g. {{Customer Name}}", defaultValue: "Customer" },
+      { name: "var2", label: variable2Label || "Offer Details", placeholder: "e.g. Special Discount Offer" },
+    ];
+    if (variable3Label.trim()) {
+      variables.push({ name: "var3", label: variable3Label, placeholder: "e.g. Validity Date" });
+    }
+
+    try {
+      await createTemplateMutation.mutateAsync({
+        name: name.trim(),
+        category,
+        headerType,
+        bodyTemplate: bodyTemplate.trim(),
+        defaultHeaderUrl: headerType === "IMAGE" ? defaultHeaderUrl.trim() : undefined,
+        variables,
+      });
+
+      setIsOpen(false);
+      setName("");
+      setBodyTemplate("");
+      setDefaultHeaderUrl("");
+    } catch (err) {
+      // Error handled by mutation toast
+    }
+  };
+
+  const renderPreview = (t: WhatsAppTemplate) => {
+    let text = t.bodyTemplate || "";
+    t.variables?.forEach((v, index) => {
+      const val = v.defaultValue || `[${v.label}]`;
+      text = text.replace(new RegExp(`\\{\\{${index + 1}\\}\\}`, "g"), val);
+    });
+    return text;
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -51,17 +83,164 @@ export default function AdminTemplates() {
         <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-sunny/30 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div>
-            <div className="text-white/80 text-xs uppercase tracking-widest font-bold">Meta approved</div>
+            <div className="text-white/80 text-xs uppercase tracking-widest font-bold">Meta Approved Templates</div>
             <h1 className="mt-2 font-display font-black text-3xl md:text-4xl">WhatsApp Templates</h1>
-            <p className="mt-2 text-white/80 max-w-lg">Reusable, high-converting message templates across every category.</p>
+            <p className="mt-2 text-white/80 max-w-lg font-medium">Reusable, high-converting WhatsApp Cloud API message templates across every category.</p>
           </div>
+
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <button className="px-6 py-3 rounded-full bg-gradient-sun text-emerald-deep font-black shadow-glow hover:shadow-lg transition cursor-pointer flex items-center gap-1.5 border-transparent">
+                <Plus className="h-5 w-5" /> Create Template
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl rounded-3xl p-6 border-white/60 bg-white/95 backdrop-blur shadow-glow z-50">
+              <DialogHeader>
+                <DialogTitle className="font-display font-black text-2xl text-emerald-deep flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-brand" /> Add New WhatsApp Template (Admin Only)
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateTemplate} className="space-y-4 mt-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Template Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Diwali Mega Festival Offer"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as any)}
+                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="MARKETING">MARKETING</option>
+                      <option value="UTILITY">UTILITY</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Header Type</label>
+                    <select
+                      value={headerType}
+                      onChange={(e) => setHeaderType(e.target.value as any)}
+                      className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="IMAGE">📷 Image Header</option>
+                      <option value="TEXT">📝 Text Only</option>
+                    </select>
+                  </div>
+                </div>
+
+                {headerType === "IMAGE" && (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep ml-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <ImageIcon className="h-3.5 w-3.5 text-brand" /> Header Image (.PNG, .JPEG, .JPG — Max 20MB)
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Formats: PNG, JPG, JPEG (≤ 20MB)</span>
+                    </label>
+
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/photo-... or click browse"
+                        value={defaultHeaderUrl}
+                        onChange={(e) => setDefaultHeaderUrl(e.target.value)}
+                        className="flex-1 px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
+                      />
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".png,.jpeg,.jpg"
+                        onChange={handleHeaderImageFileChange}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={imageUploadMutation.isPending}
+                        className="px-4 py-3 rounded-2xl bg-brand text-white font-bold text-xs shadow-xs hover:bg-emerald-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        {imageUploadMutation.isPending ? "Uploading..." : "Upload 20MB Image"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Body Template Text (Use {"{{1}}"}, {"{{2}}"} for placeholders)</label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Hello {{1}}! Enjoy {{2}} off on your next purchase till {{3}}."
+                    value={bodyTemplate}
+                    onChange={(e) => setBodyTemplate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
+                  />
+                </div>
+
+                <div className="space-y-2 p-3 rounded-2xl bg-cream/50 border border-cream">
+                  <span className="text-[11px] font-bold uppercase text-emerald-deep">Variable Placeholders Labels</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="{{1}} Label"
+                      value={variable1Label}
+                      onChange={(e) => setVariable1Label(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white text-xs outline-none border border-cream"
+                    />
+                    <input
+                      type="text"
+                      placeholder="{{2}} Label"
+                      value={variable2Label}
+                      onChange={(e) => setVariable2Label(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white text-xs outline-none border border-cream"
+                    />
+                    <input
+                      type="text"
+                      placeholder="{{3}} Label (Optional)"
+                      value={variable3Label}
+                      onChange={(e) => setVariable3Label(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-white text-xs outline-none border border-cream"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-cream">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition flex items-center gap-2 cursor-pointer text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createTemplateMutation.isPending}
+                    className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition flex items-center gap-2 cursor-pointer text-sm disabled:opacity-50"
+                  >
+                    {createTemplateMutation.isPending ? "Creating..." : "Save Template"}
+                  </button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {/* View Toggle Bar */}
       <div className="flex items-center justify-between bg-white/40 backdrop-blur p-4 rounded-3xl border border-white/50">
-        <div className="text-sm font-bold text-emerald-deep">
-          Showing {approvedTemplates.length} Approved Templates
+        <div className="text-sm font-bold text-emerald-deep flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-brand" />
+          <span>Showing {templates.length} Approved WhatsApp Templates</span>
         </div>
         <div className="hidden md:flex items-center gap-2 bg-white p-1 rounded-2xl shadow-float border border-cream">
           <button
@@ -104,14 +283,12 @@ export default function AdminTemplates() {
         </div>
       ) : (
         <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "flex flex-col gap-6"}>
-        {approvedTemplates.map((t, i) => {
-          const detail = TEMPLATE_CONTENT[t.id] || { body: "", preview: "" };
-          return (
+          {templates.map((t, i) => (
             <motion.div
-              key={t.id}
+              key={t.id || i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
               className={`rounded-[28px] bg-white p-6 shadow-float hover:shadow-glow transition flex ${
                 viewMode === "grid" 
                   ? "flex-col gap-4" 
@@ -121,17 +298,25 @@ export default function AdminTemplates() {
               {/* Header / Info Section */}
               <div className={`flex flex-col justify-between ${viewMode === "grid" ? "w-full" : "w-full lg:w-64 lg:border-r lg:border-cream lg:pr-6 shrink-0"}`}>
                 <div>
-                  <div className="h-12 w-12 rounded-2xl bg-cream grid place-items-center text-emerald-deep">
-                    <LayoutTemplate className="h-6 w-6" />
+                  <div className="flex items-center justify-between">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-brand text-white grid place-items-center font-bold">
+                      #{t.id}
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-brand/15 text-brand text-[10px] font-bold uppercase">
+                      {t.category}
+                    </span>
                   </div>
                   <div className="mt-4">
                     <h3 className="font-display font-black text-lg text-emerald-deep leading-snug">{t.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 font-semibold">{t.category} · {t.lang}</p>
+                    <p className="text-xs text-muted-foreground mt-1 font-semibold flex items-center gap-1">
+                      {t.headerType === "IMAGE" ? <ImageIcon className="h-3 w-3 text-brand" /> : <LayoutTemplate className="h-3 w-3 text-brand" />}
+                      {t.headerType === "IMAGE" ? "Image Header" : "Text Only"}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-cream lg:border-t-0 lg:pt-0">
                   <span className="text-xs text-muted-foreground font-semibold">
-                    Used <span className="font-black text-emerald-deep">{t.uses.toLocaleString()}</span> times
+                    Variables: <span className="font-black text-emerald-deep">{t.variables?.length || 0} Dynamic Placeholders</span>
                   </span>
                 </div>
               </div>
@@ -140,27 +325,25 @@ export default function AdminTemplates() {
               <div className={`flex-1 flex ${viewMode === "grid" ? "flex-col gap-4" : "flex-col xl:flex-row gap-6"}`}>
                 {/* Raw Template Code */}
                 <div className="flex-1 flex flex-col min-w-0">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Raw Template Code</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Raw Template Pattern</span>
                   <div className="flex-1 p-4 rounded-2xl bg-cream text-xs text-emerald-deep font-mono leading-relaxed border border-cream/50 break-words h-full min-h-[80px]">
-                    {detail.body}
+                    {t.bodyTemplate}
                   </div>
                 </div>
 
                 {/* WhatsApp Message Preview */}
                 <div className={`${viewMode === "grid" ? "w-full" : "w-full xl:w-80 shrink-0"} flex flex-col`}>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">WhatsApp Message Preview</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">WhatsApp Live Message Preview</span>
                   <div className="flex-1 p-4 rounded-2xl bg-[#efeae2] relative border border-[#e0dcd5] shadow-inner flex flex-col justify-center min-h-[160px]">
-                    {/* Chat Bubble styling mimicking WhatsApp */}
                     <div className="bg-[#d9fdd3] text-zinc-900 p-3 rounded-2xl rounded-tr-none text-xs leading-relaxed w-full relative shadow-[0_1px_0.5px_rgba(0,0,0,0.13)]">
-                      {detail.mediaUrl && (
+                      {t.headerType === "IMAGE" && t.defaultHeaderUrl && (
                         <img 
-                          src={detail.mediaUrl} 
+                          src={t.defaultHeaderUrl} 
                           alt="Template Header Media" 
                           className="w-full h-24 object-cover rounded-xl mb-2.5 shadow-sm border border-black/5"
                         />
                       )}
-                      <div className="break-words">{detail.preview}</div>
-                      {/* Timestamp & read double tick indicators */}
+                      <div className="break-words font-medium text-slate-800 whitespace-pre-wrap">{renderPreview(t)}</div>
                       <div className="flex items-center justify-end gap-1 mt-1.5 text-[9px] text-zinc-500/80 font-semibold select-none">
                         <span>12:00 PM</span>
                         <svg viewBox="0 0 16 15" width="13" height="13" className="fill-[#53bdeb]">
@@ -172,8 +355,7 @@ export default function AdminTemplates() {
                 </div>
               </div>
             </motion.div>
-          );
-        })}
+          ))}
         </div>
       )}
     </div>

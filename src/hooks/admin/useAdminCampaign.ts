@@ -5,6 +5,9 @@ import { adminApiFetch } from "@/lib/api";
 export interface CampaignRequestPayload {
   clientId: number;
   campaignName: string;
+  templateId?: number;
+  headerImageUrl?: string;
+  templateValues?: Record<string, string>;
 }
 
 export interface CampaignResponseItem {
@@ -50,36 +53,11 @@ export function useCreateCampaign() {
       toast.success("Campaign created successfully!");
       queryClient.invalidateQueries({ queryKey: ["adminCampaigns"] });
       queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      queryClient.invalidateQueries({ queryKey: ["adminClientUsage"] });
+      queryClient.invalidateQueries({ queryKey: ["clientUsage"] });
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to create campaign.");
-    },
-  });
-}
-
-export function useRunCampaign() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ campaignId, messagesToSend }: { campaignId: number; messagesToSend: number }) => {
-      const response = await adminApiFetch<CampaignResponseItem>(
-        `/api/admin/campaign/run/${campaignId}?messagesToSend=${messagesToSend}`,
-        {
-          method: "PUT",
-        }
-      );
-      if (response.status === "SUCCESS" && response.data) {
-        return response.data;
-      }
-      throw new Error(response.message || "Failed to run campaign.");
-    },
-    onSuccess: () => {
-      toast.success("Campaign is running!");
-      queryClient.invalidateQueries({ queryKey: ["adminCampaigns"] });
-      queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
-      queryClient.invalidateQueries({ queryKey: ["clientSubscriptionUsage"] });
-    },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to run campaign.");
     },
   });
 }
