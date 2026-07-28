@@ -106,7 +106,7 @@ export default function Hero() {
           >
             <div className="h-10 w-10 rounded-xl bg-teal-deep grid place-items-center text-white"><Users className="h-5 w-5" /></div>
             <div>
-              <div className="text-xs text-muted-foreground">Brands using Caryanam</div>
+              <div className="text-xs text-muted-foreground">Brands using WhatsUp Marketplace</div>
               <div className="font-black text-emerald-deep">500+</div>
             </div>
           </motion.div>

@@ -19,7 +19,7 @@ export default function TermsOfService() {
               Terms of Service
             </h1>
             <p className="text-emerald-900/70 max-w-xl mx-auto text-sm sm:text-base">
-              Please review the terms and conditions governing the use of Caryanam WhatsApp marketing platform and agency services.
+              Please review the terms and conditions governing the use of WhatsUp Marketplace WhatsApp marketing platform and agency services.
             </p>
             <p className="text-xs text-muted-foreground mt-4 font-semibold">Last Updated: July 2026</p>
           </div>
@@ -34,7 +34,7 @@ export default function TermsOfService() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                By creating an account, accessing the Caryanam platform, or subscribing to our marketing services, you agree to be bound by these Terms of Service and all applicable Meta WhatsApp Business Policies.
+                By creating an account, accessing the WhatsUp Marketplace platform, or subscribing to our marketing services, you agree to be bound by these Terms of Service and all applicable Meta WhatsApp Business Policies.
               </p>
             </div>
 
@@ -93,7 +93,7 @@ export default function TermsOfService() {
                 5. Contact Legal Team
               </h2>
               <p>
-                For questions regarding terms of service or compliance, email <a href="mailto:legal@caryanam.com" className="text-brand font-bold underline">legal@caryanam.com</a>.
+                For questions regarding terms of service or compliance, email <a href="mailto:legal@whatsupmarketplace.com" className="text-brand font-bold underline">legal@whatsupmarketplace.com</a>.
               </p>
             </div>
 

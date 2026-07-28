@@ -112,7 +112,7 @@ export default function AdminFeedbacks() {
             Testimonial & Feedback Moderation
           </h1>
           <p className="text-sm text-white/80 mt-2 max-w-xl font-medium">
-            Approve, reject, or manage testimonials submitted by Caryanam clients. Approved testimonials will immediately display on the landing page.
+            Approve, reject, or manage testimonials submitted by WhatsUp Marketplace clients. Approved testimonials will immediately display on the landing page.
           </p>
         </div>
       </div>

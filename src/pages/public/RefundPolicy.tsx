@@ -35,7 +35,7 @@ export default function RefundPolicy() {
                 Strict No-Refund Declaration
               </div>
               <p className="text-sm leading-relaxed text-red-800/90">
-                All fees paid to Caryanam Marketing Agency for subscription plans (Monthly Basis or Daily Basis), Meta Green-Tick setup, and WhatsApp conversation API credits are <strong>strictly non-refundable</strong> under any circumstances once processed.
+                All fees paid to WhatsUp Marketplace for subscription plans (Monthly Basis or Daily Basis), Meta Green-Tick setup, and WhatsApp conversation API credits are <strong>strictly non-refundable</strong> under any circumstances once processed.
               </p>
             </div>
 
@@ -76,7 +76,7 @@ export default function RefundPolicy() {
                 3. Duplicate Charges & Billing Glitches
               </h2>
               <p>
-                In the rare event of a technical payment gateway error resulting in duplicate charges for the same invoice, the extra payment will be refunded to your original payment method within 5–7 business days upon verification by our billing team at <a href="mailto:support@caryanam.com" className="text-brand font-bold underline">support@caryanam.com</a>.
+                In the rare event of a technical payment gateway error resulting in duplicate charges for the same invoice, the extra payment will be refunded to your original payment method within 5–7 business days upon verification by our billing team at <a href="mailto:support@whatsupmarketplace.com" className="text-brand font-bold underline">support@whatsupmarketplace.com</a>.
               </p>
             </div>
 

@@ -8,7 +8,7 @@ export default function AdminEnquiries() {
   const handleWhatsAppReply = (phone: string, name: string) => {
     const cleanPhone = phone ? phone.replace(/\D/g, "") : "";
     const fullPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const message = encodeURIComponent(`Hi ${name}, thank you for reaching out to Caryanam! How can we assist your business today?`);
+    const message = encodeURIComponent(`Hi ${name}, thank you for reaching out to WhatsUp Marketplace! How can we assist your business today?`);
     window.open(`https://wa.me/${fullPhone}?text=${message}`, "_blank");
   };
 

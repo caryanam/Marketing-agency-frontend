@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { MessageCircle, Instagram, Facebook, Linkedin, Twitter, PhoneCall, Mail, MapPin } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Twitter, PhoneCall, Mail, MapPin } from "lucide-react";
 import { Blob } from "@/components/site/Decor";
+import logoImg from "@/assets/logo.png";
 
 export default function Footer() {
   return (
@@ -11,14 +12,12 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 relative">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-brand grid place-items-center shadow-glow">
-                <MessageCircle className="h-6 w-6 text-white" strokeWidth={2.5} />
-              </div>
-              <div>
-                <div className="font-display font-black text-2xl">Caryanam</div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">Marketing Agency</div>
-              </div>
+            <div className="flex items-center gap-3">
+              <img
+                src={logoImg}
+                alt="WhatsUp Marketplace Logo"
+                className="h-14 sm:h-16 w-auto object-contain rounded-2xl bg-white p-1.5 shadow-glow"
+              />
             </div>
             <p className="mt-6 text-white/70 text-sm leading-relaxed max-w-sm">
               Premium WhatsApp marketing for ambitious Indian brands. Meta-verified, human-led, ROI-obsessed.
@@ -63,7 +62,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4  shrink-0 mt-0.5" />
-                <a href="mailto:support@caryanam.com" className="hover:text-gradient-sun transition">support@caryanam.com</a>
+                <a href="mailto:support@whatsupmarketplace.com" className="hover:text-gradient-sun transition">support@whatsupmarketplace.com</a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4  shrink-0 mt-0.5" />
@@ -74,8 +73,8 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-sm text-white/60">
-          <div>Developed by <span className="text-gradient-sun italic font-black">Caryanamindia Pvt Ltd</span></div>
-          <div>© {new Date().getFullYear()} Caryanam Marketing Agency. All rights reserved.</div>
+          <div>Developed by <span className="text-gradient-sun italic font-black">WhatsUp Marketplace Pvt Ltd</span></div>
+          <div>© {new Date().getFullYear()} WhatsUp Marketplace. All rights reserved.</div>
         </div>
       </div>
     </footer>

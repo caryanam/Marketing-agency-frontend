@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
               Privacy Policy
             </h1>
             <p className="text-emerald-900/70 max-w-xl mx-auto text-sm sm:text-base">
-              At Caryanam Marketing Agency, your privacy and data security are our top priorities. Learn how we handle your personal and business information.
+              At WhatsUp Marketplace, your privacy and data security are our top priorities. Learn how we handle your personal and business information.
             </p>
             <p className="text-xs text-muted-foreground mt-4 font-semibold">Last Updated: July 2026</p>
           </div>
@@ -109,7 +109,7 @@ export default function PrivacyPolicy() {
                 5. Contact Privacy Officer
               </h2>
               <p>
-                If you have questions regarding our privacy practices or data processing, please contact us at <a href="mailto:privacy@caryanam.com" className="text-brand font-bold underline">privacy@caryanam.com</a>.
+                If you have questions regarding our privacy practices or data processing, please contact us at <a href="mailto:privacy@whatsupmarketplace.com" className="text-brand font-bold underline">privacy@whatsupmarketplace.com</a>.
               </p>
             </div>
 

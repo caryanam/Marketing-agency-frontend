@@ -3,6 +3,8 @@ import { motion, useScroll, useMotionValueEvent } from "motion/react";
 import { useState } from "react";
 import { MessageCircle, Menu, X } from "lucide-react";
 
+import logoImg from "@/assets/logo.png";
+
 const nav = [
   { label: "Home", to: "/" },
   { label: "About", to: "/#about" },
@@ -33,18 +35,12 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
       }`}
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-        <Link to="/" className="flex items-center gap-2 group shrink-0">
-          <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-gradient-brand grid place-items-center shadow-glow group-hover:rotate-6 transition-transform">
-            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" strokeWidth={2.5} />
-          </div>
-          <div className="leading-tight">
-            <div className={`font-display font-black text-lg sm:text-xl ${darkTheme ? "text-white" : "text-emerald-deep"}`}>
-              Caryanam
-            </div>
-            <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.2em] ${darkTheme ? "text-white/60" : "text-muted-foreground"}`}>
-              Marketing Agency
-            </div>
-          </div>
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <img
+            src={logoImg}
+            alt="WhatsUp Marketplace Logo"
+            className="h-10 sm:h-12 w-auto object-contain rounded-xl bg-white p-1 shadow-md group-hover:scale-105 transition-transform"
+          />
         </Link>
 
         <div className={`hidden lg:flex items-center gap-0.5 xl:gap-1 rounded-full px-1.5 py-1.5 xl:px-2 xl:py-2 ${darkTheme ? "bg-white/10 backdrop-blur border border-white/10" : "glass-card"}`}>

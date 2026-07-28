@@ -342,7 +342,7 @@ export default function ClientPlans() {
               <div className="bg-white p-2.5 rounded-2xl border border-cream shadow-md inline-block">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                    `upi://pay?pa=asifattar003@oksbi&pn=Caryanam&am=${selectedPlan?.price}&cu=INR`
+                    `upi://pay?pa=asifattar003@oksbi&pn=WhatsUp%20Marketplace&am=${selectedPlan?.price}&cu=INR`
                   )}`}
                   alt="Scan to Pay"
                   className="w-28 h-28"

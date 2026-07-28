@@ -11,7 +11,7 @@ export default function WhyUs() {
         <motion.div {...fadeUp} className="relative order-2 lg:order-1">
           <div className="rounded-[48px] bg-gradient-teal shadow-glow p-10 relative overflow-hidden">
             <Blob className="absolute -top-10 -right-10 w-64 h-64 text-white/10" />
-            <div className="text-white/80 text-xs uppercase tracking-[0.3em] font-bold">Why Caryanam</div>
+            <div className="text-white/80 text-xs uppercase tracking-[0.3em] font-bold">Why WhatsUp Marketplace</div>
             <h3 className="mt-3 font-display text-3xl md:text-4xl font-black text-white">
               We answer to your <span className="text-sunny italic">ROI</span>, not to vanity metrics.
             </h3>

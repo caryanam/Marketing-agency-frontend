@@ -138,7 +138,7 @@ export default function Industries() {
                 </div>
                 <h3 className="font-display font-black text-2xl tracking-tight">Garages</h3>
                 <p className="text-sm text-white/80 mt-2 italic font-semibold leading-relaxed">
-                  "Caryanam's automated service alerts and updates increased our garage service bookings by 40%."
+                  "WhatsUp Marketplace's automated service alerts and updates increased our garage service bookings by 40%."
                 </p>
               </div>
             </motion.div>

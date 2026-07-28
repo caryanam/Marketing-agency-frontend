@@ -152,7 +152,7 @@ export default function ClientFeedback() {
               Client Reviews & Feedback
             </h1>
             <p className="text-sm text-white/80 mt-2 max-w-xl font-medium">
-              We value your feedback! Help us improve our services and share your Caryanam experience. Approved testimonials will appear on our homepage.
+              We value your feedback! Help us improve our services and share your WhatsUp Marketplace experience. Approved testimonials will appear on our homepage.
             </p>
           </div>
           <button
@@ -184,7 +184,7 @@ export default function ClientFeedback() {
               </div>
               <h3 className="font-display font-black text-lg text-emerald-deep">No reviews submitted yet</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto font-medium">
-                You haven't shared a testimonial yet. Help other Indian brands learn about Caryanam!
+                You haven't shared a testimonial yet. Help other Indian brands learn about WhatsUp Marketplace!
               </p>
               <button
                 onClick={handleOpenCreate}
@@ -403,7 +403,7 @@ export default function ClientFeedback() {
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-xs font-semibold text-emerald-deep resize-none leading-relaxed"
-                    placeholder="Describe your experience working with Caryanam, the metrics you achieved, or any helpful feedback..."
+                    placeholder="Describe your experience working with WhatsUp Marketplace, the metrics you achieved, or any helpful feedback..."
                   />
                 </div>
 

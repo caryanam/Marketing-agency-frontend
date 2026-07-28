@@ -6,7 +6,7 @@ export default function AdminProfile() {
   const [adminData, setAdminData] = useState({
     id: "1",
     name: "Administrator",
-    email: "admin@caryanam.com",
+    email: "admin@whatsupmarketplace.com",
     role: "ADMIN",
     token: "",
   });
@@ -29,7 +29,7 @@ export default function AdminProfile() {
           setAdminData({
             id: item.id || item.decoded?.sub || "1",
             name: derivedName,
-            email: item.email || "admin@caryanam.com",
+            email: item.email || "admin@whatsupmarketplace.com",
             role: (item.role || item.decoded?.role || "ADMIN").toUpperCase(),
             token: item.token || "",
           });

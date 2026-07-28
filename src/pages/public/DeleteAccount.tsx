@@ -55,7 +55,7 @@ export default function DeleteAccount() {
               Delete My Account
             </h1>
             <p className="text-emerald-900/70 max-w-xl mx-auto text-sm sm:text-base">
-              Submit credentials to permanently delete your Caryanam client account and associated business data.
+              Submit credentials to permanently delete your WhatsUp Marketplace client account and associated business data.
             </p>
             <p className="text-xs text-muted-foreground mt-4 font-semibold">Last Updated: July 2026</p>
           </div>

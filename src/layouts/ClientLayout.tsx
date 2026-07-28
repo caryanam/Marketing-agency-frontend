@@ -16,6 +16,8 @@ import {
   useClientMarkAllRead,
 } from "@/hooks/client/useClientNotifications";
 
+import logoImg from "@/assets/logo.png";
+
 export default function ClientLayout() {
   const loc = useLocation();
   const navigate = useNavigate();
@@ -165,11 +167,13 @@ export default function ClientLayout() {
 
       <div className="flex items-center justify-between mb-8">
         <Link to="/" className="relative flex items-center gap-3 group">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-brand grid place-items-center shadow-glow group-hover:scale-105 transition duration-300">
-            <MessageCircle className="h-6 w-6 text-white" strokeWidth={2.5} />
-          </div>
+          <img
+            src={logoImg}
+            alt="WhatsUp Marketplace Logo"
+            className="h-12 w-auto object-contain rounded-2xl bg-white p-1 shadow-glow group-hover:scale-105 transition duration-300"
+          />
           <div>
-            <div className="font-display font-black text-xl tracking-tight">Caryanam</div>
+            <div className="font-display font-black text-lg tracking-tight">WhatsUp</div>
             <div className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Client Portal</div>
           </div>
         </Link>

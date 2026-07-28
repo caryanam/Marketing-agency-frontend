@@ -27,7 +27,7 @@ export default function About() {
         </motion.div>
 
         <motion.div {...fadeUp}>
-          <div className="text-sm font-black uppercase tracking-[0.3em] text-brand">About Caryanam</div>
+          <div className="text-sm font-black uppercase tracking-[0.3em] text-brand">About WhatsUp Marketplace</div>
           <h2 className="mt-3 font-display text-4xl md:text-5xl font-black text-emerald-deep leading-tight">
             A boutique agency<br />built for <span className="text-gradient-brand italic">conversation‑led</span> growth.
           </h2>

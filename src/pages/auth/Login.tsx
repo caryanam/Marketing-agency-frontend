@@ -10,6 +10,7 @@ import loginBg from "@/assets/login-bg.png";
 import loginHero from "@/assets/login-hero.png";
 import loginAvatar from "@/assets/login-avatar.png";
 import bgVideo from "@/assets/now_animatied_this_only_waves.mp4";
+import logoImg from "@/assets/logo.png";
 
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useClientAuth } from "@/hooks/auth/useClientAuth";
@@ -269,16 +270,11 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-[60%] h-full relative z-10 overflow-hidden flex-col shrink-0">
         {/* Logo */}
         <Link to="/" className="relative z-10 flex items-center gap-3 p-7 pl-12 xl:p-9 xl:pl-16 hover:opacity-90 transition-opacity cursor-pointer">
-          <div
-            className="h-11 w-11 rounded-full grid place-items-center shadow-lg shrink-0"
-            style={{ background: "linear-gradient(135deg,#1b5e20,#2e7d32)" }}
-          >
-            <MessageCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="font-display font-black text-xl leading-tight" style={{ color: "#1a3a1a" }}>Caryanam</div>
-            <div className="text-[9px] uppercase tracking-[0.22em] font-bold" style={{ color: "#5a8a5a" }}>Marketing Agency</div>
-          </div>
+          <img
+            src={logoImg}
+            alt="WhatsUp Marketplace Logo"
+            className="h-12 xl:h-14 w-auto object-contain rounded-2xl bg-white p-1 shadow-md"
+          />
         </Link>
 
         {/* Headline */}
@@ -319,16 +315,11 @@ export default function Login() {
       <div className="flex-1 min-h-screen h-full w-full relative z-10 flex flex-col items-center justify-center lg:justify-start lg:pl-4 xl:pl-10 p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto">
         {/* Mobile logo */}
         <Link to="/" className="lg:hidden mb-6 flex items-center gap-2.5 shrink-0 hover:opacity-90 transition-opacity cursor-pointer">
-          <div
-            className="h-10 w-10 rounded-full grid place-items-center shadow-md"
-            style={{ background: "linear-gradient(135deg,#1b5e20,#2e7d32)" }}
-          >
-            <MessageCircle className="h-5 w-5 text-white" strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="font-display font-black text-xl leading-tight" style={{ color: "#1a3a1a" }}>Caryanam</div>
-            <div className="text-[8px] uppercase tracking-[0.2em] font-bold" style={{ color: "#5a8a5a" }}>Marketing Agency</div>
-          </div>
+          <img
+            src={logoImg}
+            alt="WhatsUp Marketplace Logo"
+            className="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md"
+          />
         </Link>
 
         {/* White Card */}

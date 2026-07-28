@@ -182,7 +182,7 @@ export default function Testimonials() {
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white border border-emerald-100 shadow-float">
             <span className="h-2.5 w-2.5 rounded-full bg-brand animate-pulse" />
             <span className="text-xs sm:text-sm font-bold text-emerald-deep">
-              Over 500+ Indian Enterprise Brands Trust Caryanam for WhatsApp Revenue Growth
+              Over 500+ Indian Enterprise Brands Trust WhatsUp Marketplace for WhatsApp Revenue Growth
             </span>
           </div>
         </motion.div>

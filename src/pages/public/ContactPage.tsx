@@ -81,7 +81,7 @@ export default function ContactPage() {
               Reach Us — Campaign Strategists
             </div>
             <h1 className="font-display font-black text-4xl sm:text-5xl mb-4 leading-tight text-emerald-deep">
-              Contact <span className="text-gradient-brand italic">Caryanam</span>
+              Contact <span className="text-gradient-brand italic">WhatsUp Marketplace</span>
             </h1>
             <p className="text-emerald-900/70 max-w-xl mx-auto text-sm sm:text-base">
               Have questions about WhatsApp Business API integration, Meta verification, or scaling broadcasts? We're online and ready to assist.
@@ -117,8 +117,8 @@ export default function ContactPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Email Us</div>
-                  <a href="mailto:support@caryanam.com" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition truncate">
-                    support@caryanam.com
+                  <a href="mailto:support@whatsupmarketplace.com" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition truncate">
+                    support@whatsupmarketplace.com
                   </a>
                   <div className="text-[11px] text-brand font-semibold">Average reply under 15 mins</div>
                 </div>
@@ -176,7 +176,7 @@ export default function ContactPage() {
                       Enquiry Received!
                     </h3>
                     <p className="text-xs sm:text-sm text-muted-foreground">
-                      Thank you for contacting Caryanam. Our team has received your enquiry and will respond within 15 minutes.
+                      Thank you for contacting WhatsUp Marketplace. Our team has received your enquiry and will respond within 15 minutes.
                     </p>
                     <button
                       onClick={() => setSubmitted(false)}
@@ -239,7 +239,7 @@ export default function ContactPage() {
 
                 <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border/40 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-emerald-deep font-semibold">
                   <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7755994123</div>
-                  <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-brand shrink-0" /> <span className="truncate">support@caryanam.com</span></div>
+                  <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-brand shrink-0" /> <span className="truncate">support@whatsupmarketplace.com</span></div>
                   <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand shrink-0" /> Kharadi, Pune, 411014</div>
                 </div>
               </motion.div>
