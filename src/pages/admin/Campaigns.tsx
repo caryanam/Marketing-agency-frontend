@@ -371,13 +371,29 @@ export default function AdminCampaigns() {
                     </label>
 
                     <div className="flex gap-2 items-center">
-                      <input
-                        type="url"
-                        placeholder="https://example.com/banner.jpg or click browse"
-                        value={headerImageUrl}
-                        onChange={(e) => setHeaderImageUrl(e.target.value)}
-                        className="flex-1 px-4 py-3 rounded-2xl bg-white border border-emerald-100 text-xs text-foreground font-medium outline-none focus:border-brand"
-                      />
+                      {headerImageUrl.includes("/uploads/") ? (
+                        <div className="flex-1 flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 shadow-inner">
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Image Uploaded Successfully
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setHeaderImageUrl("")} 
+                            className="text-emerald-500 hover:text-emerald-700 cursor-pointer"
+                            title="Remove Image"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          type="url"
+                          placeholder="Paste image URL or click browse..."
+                          value={headerImageUrl}
+                          onChange={(e) => setHeaderImageUrl(e.target.value)}
+                          className="flex-1 px-4 py-3 rounded-2xl bg-white border border-emerald-100 text-xs text-foreground font-medium outline-none focus:border-brand"
+                        />
+                      )}
                       <input
                         type="file"
                         ref={fileInputRef}
