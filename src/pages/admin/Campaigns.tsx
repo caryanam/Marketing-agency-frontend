@@ -98,7 +98,7 @@ export default function AdminCampaigns() {
   const imageUploadMutation = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleHeaderImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeaderImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -107,13 +107,12 @@ export default function AdminCampaigns() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setHeaderImageUrl(event.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const publicUrl = await imageUploadMutation.mutateAsync(file);
+      setHeaderImageUrl(publicUrl);
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+    }
   };
 
   // Query selected client's live usage and database contacts count
