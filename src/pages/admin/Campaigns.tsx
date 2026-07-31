@@ -15,15 +15,64 @@ import {
   CheckCircle2,
   Upload,
   ArrowLeft,
+  Play,
+  Pause,
+  XCircle,
+  Activity
 } from "lucide-react";
 import {
   useAdminCampaigns,
   useCreateCampaign,
+  useStartCampaign,
+  usePauseCampaign,
+  useResumeCampaign,
+  useCancelCampaign,
+  useCampaignStats,
+  CampaignDetailResponseDTO
 } from "@/hooks/admin/useAdminCampaign";
 import { useAdminClients, useAdminClientUsage, useAdminCustomerData } from "@/hooks/admin";
-import { WHATSAPP_TEMPLATES, WhatsAppTemplate } from "@/lib/templates-data";
+import { WHATSAPP_TEMPLATES } from "@/lib/templates-data";
 import { useWhatsAppTemplates } from "@/hooks/useWhatsAppTemplates";
 import { useImageUpload } from "@/hooks/useImageUpload";
+
+// Sub-component to fetch and render stats for a single campaign
+function CampaignStatsView({ campaign }: { campaign: CampaignDetailResponseDTO }) {
+  const { data: stats } = useCampaignStats(campaign.id);
+  const displayStats = stats || campaign; // Fallback to initial campaign data
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        {[
+          { l: "Total", v: displayStats.totalRecipients || 0, tone: "bg-slate-100 text-slate-700" },
+          { l: "Queued", v: displayStats.queued || 0, tone: "bg-blue-50 text-blue-700" },
+          { l: "Processing", v: displayStats.processing || 0, tone: "bg-sunny/40 text-emerald-deep" },
+          { l: "Sent", v: displayStats.sent || displayStats.messagesSent || 0, tone: "bg-cream text-emerald-deep" },
+          { l: "Delivered", v: displayStats.delivered || 0, tone: "bg-brand/10 text-brand" },
+          { l: "Failed", v: displayStats.failed || 0, tone: "bg-red-50 text-red-600" },
+        ].map((s) => (
+          <div key={s.l} className={`rounded-2xl p-3 ${s.tone}`}>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase opacity-80">
+               {s.l}
+            </div>
+            <div className="mt-1 font-display font-black text-xl">{s.v.toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="h-2 rounded-full bg-cream overflow-hidden relative">
+        <div
+          className="absolute left-0 top-0 h-full bg-brand transition-all duration-500 ease-out"
+          style={{ width: `${displayStats.completionPercentage || 0}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
+        <span>{displayStats.completionPercentage || 0}% Completed</span>
+        <span>{displayStats.deliveryRate || 0}% Delivery Rate</span>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminCampaigns() {
   const { data: campaigns = [], isLoading: isCampaignsLoading } = useAdminCampaigns();
@@ -31,6 +80,10 @@ export default function AdminCampaigns() {
   const { data: whatsappTemplates = WHATSAPP_TEMPLATES } = useWhatsAppTemplates();
 
   const createCampaignMutation = useCreateCampaign();
+  const startCampaignMutation = useStartCampaign();
+  const pauseCampaignMutation = usePauseCampaign();
+  const resumeCampaignMutation = useResumeCampaign();
+  const cancelCampaignMutation = useCancelCampaign();
 
   // View state: "list" or "create" full page
   const [view, setView] = useState<"list" | "create">("list");
@@ -77,14 +130,14 @@ export default function AdminCampaigns() {
         setHeaderImageUrl("");
       }
       const initialValues: Record<string, string> = {};
-      selectedTemplate.variables.forEach((v) => {
+      selectedTemplate.variables?.forEach((v) => {
         if (v.defaultValue) {
           initialValues[v.name] = v.defaultValue;
         }
       });
       setTemplateValues(initialValues);
     }
-  }, [selectedTemplateId]);
+  }, [selectedTemplateId, selectedTemplate]);
 
   const totalClientContacts = customerData ? customerData.length : 0;
   const remainingQuota = usageData?.remainingMessages ?? 0;
@@ -101,12 +154,40 @@ export default function AdminCampaigns() {
     e.preventDefault();
     if (!name.trim() || !selectedClientId) return;
 
+    // Convert flat templateValues to mapping array
+    const variableMappings = selectedTemplate.variables?.map((v, index) => {
+      // Hardcode Variable 1 (usually {{1}}) to auto-fetch the customer name
+      if (index === 0) {
+        return {
+          variableIndex: 1,
+          variableType: "DYNAMIC" as const,
+          fieldName: "name"
+        };
+      }
+
+      const val = templateValues[v.name] || v.defaultValue || "";
+      // Simple heuristic: if it looks like {FieldName}, we treat it as dynamic
+      if (val.startsWith("{") && val.endsWith("}")) {
+        return {
+          variableIndex: index + 1,
+          variableType: "DYNAMIC" as const,
+          fieldName: val.replace(/[{}]/g, "")
+        };
+      }
+      return {
+        variableIndex: index + 1,
+        variableType: "STATIC" as const,
+        staticValue: val
+      };
+    }) || [];
+
     await createCampaignMutation.mutateAsync({
       clientId: parseInt(selectedClientId, 10),
       campaignName: name.trim(),
       templateId: selectedTemplateId,
       headerImageUrl: headerImageUrl || undefined,
-      templateValues: templateValues,
+      variableMappings,
+      messageLimit: autoTargetCount // Optional based on the backend
     });
 
     setView("list");
@@ -116,9 +197,12 @@ export default function AdminCampaigns() {
   };
 
   const renderBodyPreview = () => {
-    let text = selectedTemplate.bodyTemplate;
-    selectedTemplate.variables.forEach((v, index) => {
-      const val = templateValues[v.name] || v.placeholder || `{{${index + 1}}}`;
+    let text = selectedTemplate?.bodyTemplate || "";
+    selectedTemplate?.variables?.forEach((v, index) => {
+      let val = templateValues[v.name] || v.placeholder || `{{${index + 1}}}`;
+      if (index === 0) {
+        val = "{Customer Name}";
+      }
       text = text.replace(new RegExp(`\\{\\{${index + 1}\\}\\}`, "g"), val);
     });
     return text;
@@ -274,11 +358,11 @@ export default function AdminCampaigns() {
                 <div className="text-xs font-bold uppercase tracking-wider text-emerald-deep flex items-center justify-between">
                   <span>Template Variable Mapping</span>
                   <span className="px-2.5 py-0.5 rounded-full bg-brand/15 text-brand text-[10px] font-bold">
-                    {selectedTemplate.headerType === "IMAGE" ? "IMAGE HEADER" : "TEXT HEADER"}
+                    {selectedTemplate?.headerType === "IMAGE" ? "IMAGE HEADER" : "TEXT HEADER"}
                   </span>
                 </div>
 
-                {selectedTemplate.headerType === "IMAGE" && (
+                {selectedTemplate?.headerType === "IMAGE" && (
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-bold uppercase text-emerald-800 ml-1 flex items-center justify-between">
                       <span className="flex items-center gap-1">
@@ -314,20 +398,42 @@ export default function AdminCampaigns() {
                 )}
 
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {selectedTemplate.variables.map((v) => (
-                    <div key={v.name}>
-                      <label className="block text-[11px] font-bold text-emerald-800 mb-1 ml-1 truncate" title={v.label}>
-                        {v.label}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={v.placeholder}
-                        value={templateValues[v.name] || ""}
-                        onChange={(e) => setTemplateValues({ ...templateValues, [v.name]: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-emerald-100 text-xs text-foreground font-medium outline-none focus:border-brand"
-                      />
-                    </div>
-                  ))}
+                  <div className="col-span-full mb-1">
+                    <span className="text-[10px] text-emerald-600 block">💡 Use <code>{'{FieldName}'}</code> to dynamically map from uploaded Excel columns (e.g. <code>{'{firstName}'}</code>, <code>{'{city}'}</code>). Otherwise, plain text will be sent statically.</span>
+                  </div>
+                  {selectedTemplate?.variables?.map((v, index) => {
+                    // Variable 1 is auto-mapped to Customer Name
+                    if (index === 0) {
+                      return (
+                        <div key={v.name}>
+                          <label className="block text-[11px] font-bold text-emerald-800 mb-1 ml-1 truncate" title={v.label}>
+                            {v.label} (Receiver Name)
+                          </label>
+                          <input
+                            type="text"
+                            disabled
+                            value="[ Auto-fetched from database ]"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-cream/70 border border-emerald-100/50 text-emerald-700 font-bold outline-none cursor-not-allowed text-xs"
+                          />
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={v.name}>
+                        <label className="block text-[11px] font-bold text-emerald-800 mb-1 ml-1 truncate" title={v.label}>
+                          {v.label}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={v.placeholder}
+                          value={templateValues[v.name] || ""}
+                          onChange={(e) => setTemplateValues({ ...templateValues, [v.name]: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-emerald-100 text-xs text-foreground font-medium outline-none focus:border-brand"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -345,11 +451,11 @@ export default function AdminCampaigns() {
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Meta Approved Template
                   </span>
-                  <span className="uppercase text-[10px] text-slate-400">{selectedTemplate.category}</span>
+                  <span className="uppercase text-[10px] text-slate-400">{selectedTemplate?.category}</span>
                 </div>
 
                 <div className="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-3 text-xs">
-                  {selectedTemplate.headerType === "IMAGE" && headerImageUrl && (
+                  {selectedTemplate?.headerType === "IMAGE" && headerImageUrl && (
                     <div className="h-44 rounded-xl bg-slate-700 overflow-hidden relative border border-slate-600">
                       <img src={headerImageUrl} alt="Header" className="w-full h-full object-cover" />
                     </div>
@@ -377,8 +483,8 @@ export default function AdminCampaigns() {
                 disabled={createCampaignMutation.isPending || !selectedClientId || !name.trim()}
                 className="px-8 py-3.5 rounded-2xl bg-gradient-brand text-white font-black shadow-glow hover:shadow-lg transition flex items-center gap-2 cursor-pointer text-sm disabled:opacity-50"
               >
-                <Send className="h-4 w-4" />
-                {createCampaignMutation.isPending ? "Creating Campaign..." : "Create Campaign"}
+                <CheckCircle2 className="h-4 w-4" />
+                {createCampaignMutation.isPending ? "Creating..." : "Save Campaign Draft"}
               </button>
             </div>
           </div>
@@ -438,9 +544,6 @@ export default function AdminCampaigns() {
         <div className="grid gap-5">
           <AnimatePresence initial={false}>
             {campaigns.map((c) => {
-              const clientObj = clients.find((cl) => cl.id === c.clientId);
-              const companyName = clientObj ? clientObj.companyName : `Client #${c.clientId}`;
-
               return (
                 <motion.div
                   key={c.id}
@@ -448,7 +551,7 @@ export default function AdminCampaigns() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  className="rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/40 hover:border-emerald-100 transition"
+                  className="rounded-[28px] bg-white p-6 shadow-float border border-emerald-100/40 hover:border-emerald-100 transition space-y-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -459,48 +562,76 @@ export default function AdminCampaigns() {
                         <div className="font-display font-black text-lg text-emerald-deep leading-snug">{c.campaignName}</div>
                         <div className="text-xs text-muted-foreground mt-0.5 capitalize">
                           <Link to={`/admin/clients/${c.clientId}`} className="hover:underline hover:text-brand transition font-bold">
-                            {companyName}
+                            {c.clientName || c.companyName || `Client #${c.clientId}`}
                           </Link>
+                          {" • "}
+                          Template: <span className="font-semibold text-emerald-800">{c.templateName || `T-${c.templateId}`}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          c.campaignStatus === "RUNNING"
-                            ? "bg-brand text-white"
+                        className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                          c.campaignStatus === "PROCESSING"
+                            ? "bg-brand text-white animate-pulse"
                             : c.campaignStatus === "CREATED"
                             ? "bg-sunny text-emerald-deep"
-                            : "bg-teal-deep text-white"
+                            : c.campaignStatus === "COMPLETED"
+                            ? "bg-teal-deep text-white"
+                            : "bg-slate-200 text-slate-700"
                         }`}
                       >
+                        {c.campaignStatus === "PROCESSING" && <Activity className="h-3.5 w-3.5" />}
                         {c.campaignStatus}
                       </span>
+                      
+                      {/* Lifecycle Action Buttons */}
+                      {c.campaignStatus === "CREATED" && (
+                        <button
+                          onClick={() => startCampaignMutation.mutate(c.id)}
+                          disabled={startCampaignMutation.isPending}
+                          className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="h-3.5 w-3.5" /> Start
+                        </button>
+                      )}
+                      {c.campaignStatus === "PROCESSING" && (
+                        <button
+                          onClick={() => pauseCampaignMutation.mutate(c.id)}
+                          disabled={pauseCampaignMutation.isPending}
+                          className="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Pause className="h-3.5 w-3.5" /> Pause
+                        </button>
+                      )}
+                      {c.campaignStatus === "PAUSED" && (
+                        <button
+                          onClick={() => resumeCampaignMutation.mutate(c.id)}
+                          disabled={resumeCampaignMutation.isPending}
+                          className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="h-3.5 w-3.5" /> Resume
+                        </button>
+                      )}
+                      {(c.campaignStatus === "CREATED" || c.campaignStatus === "PROCESSING" || c.campaignStatus === "PAUSED") && (
+                        <button
+                          onClick={() => {
+                            if(window.confirm("Are you sure you want to cancel this campaign? Pending messages will be discarded.")) {
+                              cancelCampaignMutation.mutate(c.id);
+                            }
+                          }}
+                          disabled={cancelCampaignMutation.isPending}
+                          className="px-3 py-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <XCircle className="h-3.5 w-3.5" /> Cancel
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { i: Send, l: "Sent Count", v: c.messagesSent, tone: "bg-cream text-emerald-deep" },
-                      { i: CheckCheck, l: "Delivered", v: Math.floor(c.messagesSent * 0.98), tone: "bg-brand/10 text-brand" },
-                      { i: Eye, l: "Read", v: Math.floor(c.messagesSent * 0.8), tone: "bg-teal-deep/10 text-teal-deep" },
-                      { i: MessageCircle, l: "Replied", v: Math.floor(c.messagesSent * 0.15), tone: "bg-sunny/40 text-emerald-deep" },
-                    ].map((s) => (
-                      <div key={s.l} className={`rounded-2xl p-4 ${s.tone}`}>
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase opacity-80">
-                          <s.i className="h-3 w-3" /> {s.l}
-                        </div>
-                        <div className="mt-2 font-display font-black text-2xl">{s.v.toLocaleString()}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 h-2 rounded-full bg-cream overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-brand transition-all duration-500 ease-out"
-                      style={{ width: `${c.messagesSent > 0 ? 98 : 0}%` }}
-                    />
-                  </div>
+                  {/* Live Stats Component */}
+                  <CampaignStatsView campaign={c} />
+                  
                 </motion.div>
               );
             })}

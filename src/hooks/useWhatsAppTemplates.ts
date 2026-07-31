@@ -15,10 +15,27 @@ export function useWhatsAppTemplates() {
     queryFn: async () => {
       try {
         const response = await adminAxios.get<ApiResponse<WhatsAppTemplate[]>>(
-          "/api/whatsapp-templates"
+          "/api/templates"
         );
         if (response.data && response.data.status === "SUCCESS" && response.data.data) {
-          return response.data.data;
+          return response.data.data.map((t: any) => {
+            const vars = [];
+            for (let i = 1; i <= (t.variableCount || 0); i++) {
+              vars.push({
+                name: `variable_${i}`,
+                label: `Variable {{${i}}}`,
+                placeholder: `Enter value for {{${i}}}`
+              });
+            }
+            return {
+              id: t.id,
+              name: t.templateName || t.name,
+              category: t.category || "MARKETING",
+              headerType: t.headerType || "NONE",
+              bodyTemplate: t.body || "",
+              variables: vars
+            };
+          });
         }
       } catch (err) {
         // Fallback to pre-configured templates if offline or server initializing
@@ -28,25 +45,24 @@ export function useWhatsAppTemplates() {
   });
 }
 
-export function useCreateWhatsAppTemplate() {
+export function useSyncWhatsAppTemplates() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<WhatsAppTemplate>) => {
-      const response = await adminAxios.post<ApiResponse<WhatsAppTemplate>>(
-        "/api/whatsapp-templates",
-        payload
+    mutationFn: async () => {
+      const response = await adminAxios.post<ApiResponse<number>>(
+        "/api/templates/sync"
       );
-      if (response.data && response.data.status === "SUCCESS" && response.data.data) {
-        return response.data.data;
+      if (response.data && response.data.status === "SUCCESS") {
+        return response.data.data; // Number of synced templates
       }
-      throw new Error(response.data?.message || "Failed to create WhatsApp template.");
+      throw new Error(response.data?.message || "Failed to sync templates from Meta.");
     },
-    onSuccess: () => {
-      toast.success("WhatsApp template created successfully!");
+    onSuccess: (syncedCount) => {
+      toast.success(`Successfully synced ${syncedCount} templates from Meta!`);
       queryClient.invalidateQueries({ queryKey: ["whatsappTemplates"] });
     },
     onError: (err: any) => {
-      toast.error(err.message || "Failed to create template. Only Admins can perform this action.");
+      toast.error(err.message || "Failed to sync templates. Please check your Meta API configuration.");
     },
   });
 }
