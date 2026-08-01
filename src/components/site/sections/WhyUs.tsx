@@ -35,7 +35,7 @@ export default function WhyUs() {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground font-semibold">Call our strategist</div>
-                <div className="font-black text-emerald-deep text-lg">+91 98765 43210</div>
+                <div className="font-black text-emerald-deep text-lg">+91  7755994123</div>
               </div>
             </div>
           </div>
