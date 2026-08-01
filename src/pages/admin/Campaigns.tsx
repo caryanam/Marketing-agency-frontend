@@ -47,7 +47,7 @@ function CampaignStatsView({ campaign }: { campaign: CampaignDetailResponseDTO }
           { l: "Total", v: displayStats.totalRecipients || 0, tone: "bg-slate-100 text-slate-700" },
           { l: "Queued", v: displayStats.queued || 0, tone: "bg-blue-50 text-blue-700" },
           { l: "Processing", v: displayStats.processing || 0, tone: "bg-sunny/40 text-emerald-deep" },
-          { l: "Sent", v: displayStats.sent || displayStats.messagesSent || 0, tone: "bg-cream text-emerald-deep" },
+          { l: "Sent", v: displayStats.sent || (displayStats as any).messagesSent || 0, tone: "bg-cream text-emerald-deep" },
           { l: "Delivered", v: displayStats.delivered || 0, tone: "bg-brand/10 text-brand" },
           { l: "Failed", v: displayStats.failed || 0, tone: "bg-red-50 text-red-600" },
         ].map((s) => (
