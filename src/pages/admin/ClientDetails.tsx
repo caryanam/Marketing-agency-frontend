@@ -597,36 +597,24 @@ export default function AdminClientDetails() {
                   <DialogHeader>
                     <DialogTitle className="font-display font-black text-2xl text-emerald-deep">Create Client Campaign</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleLaunchCampaign} className="space-y-4 mt-2">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-emerald-deep mb-1.5 ml-1">Campaign Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Clearance Sale Promo"
-                        value={campName}
-                        onChange={e => setCampName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl bg-cream border border-transparent focus:border-brand focus:bg-white outline-none transition text-sm text-foreground font-medium"
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4 border-t border-cream">
-                      <button
-                        type="button"
-                        onClick={() => setIsCampOpen(false)}
-                        className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={createCampaignMutation.isPending}
-                        className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer"
-                      >
-                        Create Campaign
-                      </button>
-                    </div>
-                  </form>
+                  <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-cream">
+                    <button
+                      type="button"
+                      onClick={() => setIsCampOpen(false)}
+                      className="px-5 py-3 rounded-2xl bg-cream text-emerald-deep hover:bg-cream/70 font-bold transition text-xs cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/admin/campaigns";
+                      }}
+                      className="px-6 py-3 rounded-2xl bg-gradient-brand text-white font-bold shadow-glow hover:shadow-lg transition text-xs cursor-pointer"
+                    >
+                      Go to Campaign Manager
+                    </button>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>

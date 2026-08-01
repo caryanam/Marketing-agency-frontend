@@ -100,7 +100,7 @@ export function useClientCustomerData(clientId?: number | string) {
       }
 
       const response = await clientAxios.post<ApiResponse<ExcelImportResponseDTO>>(
-        "/api/customer-data/import",
+        `/api/customer-data/import/${targetClientId}`,
         formData,
         {
           headers: {
@@ -174,7 +174,7 @@ export function useAdminCustomerData(clientId?: number | string) {
       }
 
       const response = await adminAxios.post<ApiResponse<ExcelImportResponseDTO>>(
-        "/api/customer-data/import",
+        `/api/customer-data/import/${targetClientId}`,
         formData,
         {
           headers: {
