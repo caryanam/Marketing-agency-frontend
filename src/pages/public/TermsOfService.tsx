@@ -90,12 +90,19 @@ export default function TermsOfService() {
 
             <div>
               <h2 className="font-display font-black text-2xl text-emerald-deep mb-4">
-                5. Contact Legal Team
+                5. Non-Affiliation Disclaimer & Legal Contact
               </h2>
+              <p className="mb-3">
+                WhatsUp Marketplace is an independent platform operated by Caryanamindia Pvt Ltd. We are not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp LLC, Meta Platforms, Inc., or any of their subsidiaries.
+              </p>
               <p>
-                For questions regarding terms of service or compliance, email <a href="mailto:legal@whatsupmarketplace.com" className="text-brand font-bold underline">legal@whatsupmarketplace.com</a>.
+                For legal compliance inquiries or terms of service clarification, email <a href="mailto:support@whatsupmarketplace.com" className="text-brand font-bold underline">support@whatsupmarketplace.com</a>.
               </p>
             </div>
+
+
+
+
 
           </div>
         </section>

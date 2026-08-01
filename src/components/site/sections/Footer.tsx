@@ -10,15 +10,18 @@ export default function Footer() {
       <Blob className="absolute -top-10 right-1/4 w-64 h-64 text-teal-deep/60" />
 
       <div className="max-w-7xl mx-auto px-6 relative">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div>
-            <div className="flex items-center gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-6 xl:gap-10">
+          <div className="lg:col-span-4">
+            <Link to="/" className="inline-flex items-center gap-2 sm:gap-2.5 xl:gap-3 group">
               <img
                 src={logoImg}
                 alt="WhatsUp Marketplace Logo"
-                className="h-14 sm:h-16 w-auto object-contain rounded-2xl bg-white p-1.5 shadow-glow"
+                className="h-10 sm:h-11 lg:h-10 xl:h-12 w-auto object-contain rounded-2xl bg-white p-1 sm:p-1.5 shadow-glow shrink-0 group-hover:scale-105 transition-transform duration-300"
               />
-            </div>
+              <span className="font-sans font-extrabold text-base sm:text-lg lg:text-base xl:text-xl tracking-tight text-white whitespace-nowrap">
+                WhatsUp <span className="text-sunny">Marketplace</span>
+              </span>
+            </Link>
             <p className="mt-6 text-white/70 text-sm leading-relaxed max-w-sm">
               Premium WhatsApp marketing for ambitious Indian brands. Meta-verified, human-led, ROI-obsessed.
             </p>
@@ -29,7 +32,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <div className="font-display font-black text-lg mb-4">Explore</div>
             <ul className="space-y-2 text-sm text-white/70">
               <li><Link to="/" className="hover:text-sunny transition-colors">Home</Link></li>
@@ -43,7 +46,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <div className="font-display font-black text-lg mb-4">Legal</div>
             <ul className="space-y-2 text-sm text-white/70">
               <li><Link to="/privacy-policy" className="hover:text-sunny transition-colors">Privacy Policy</Link></li>
@@ -53,28 +56,33 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="lg:col-span-4">
             <div className="font-display font-black text-lg mb-4">Reach Us</div>
             <ul className="space-y-3 text-sm text-white/80">
               <li className="flex items-start gap-2.5">
                 <PhoneCall className="h-4 w-4 shrink-0 mt-0.5" />
-                <a href="tel:+917755994123" className="hover:text-gradient-sun transition">+91 7755994123</a>
+                <a href="tel:+917030682123" className="hover:text-gradient-sun transition">+91 7030682123</a>
               </li>
               <li className="flex items-start gap-2.5">
-                <Mail className="h-4 w-4  shrink-0 mt-0.5" />
-                <a href="mailto:support@whatsupmarketplace.com" className="hover:text-gradient-sun transition">support@whatsupmarketplace.com</a>
+                <Mail className="h-4 w-4 shrink-0 mt-0.5" />
+                <a href="mailto:support@whatsupmarketplace.com" className="hover:text-gradient-sun transition break-all">support@whatsupmarketplace.com</a>
               </li>
               <li className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4  shrink-0 mt-0.5" />
+                <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>Kharadi, Pune, 411014</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-sm text-white/60">
-          <div>Developed by <span className="text-gradient-sun italic font-black">WhatsUp Marketplace Pvt Ltd</span></div>
-          <div>© {new Date().getFullYear()} WhatsUp Marketplace. All rights reserved.</div>
+        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col gap-4 text-xs text-white/60">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+            <div>Developed by <span className="text-gradient-sun italic font-black">Caryanamindia Pvt Ltd</span></div>
+            <div>© {new Date().getFullYear()} WhatsUp Marketplace. All rights reserved.</div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-white/40 max-w-5xl">
+            Disclaimer: WhatsUp Marketplace is an independent software application developed by Caryanamindia Pvt Ltd for managing WhatsApp API marketing campaigns. WhatsUp Marketplace is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp LLC, Meta Platforms, Inc., or any of their subsidiaries or affiliates. WhatsApp and Meta are registered trademarks of Meta Platforms, Inc.
+          </p>
         </div>
       </div>
     </footer>

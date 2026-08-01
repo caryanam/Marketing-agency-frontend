@@ -269,12 +269,15 @@ export default function Login() {
       ═══════════════════════════════════════════════════════════ */}
       <div className="hidden lg:flex lg:w-[60%] h-full relative z-10 overflow-hidden flex-col shrink-0">
         {/* Logo */}
-        <Link to="/" className="relative z-10 flex items-center gap-3 p-7 pl-12 xl:p-9 xl:pl-16 hover:opacity-90 transition-opacity cursor-pointer">
+        <Link to="/" className="relative z-10 flex items-center gap-3 p-7 pl-12 xl:p-9 xl:pl-16 hover:opacity-90 transition-opacity cursor-pointer group">
           <img
             src={logoImg}
             alt="WhatsUp Marketplace Logo"
-            className="h-12 xl:h-14 w-auto object-contain rounded-2xl bg-white p-1 shadow-md"
+            className="h-11 xl:h-12 w-auto object-contain rounded-2xl bg-white p-1.5 shadow-md group-hover:scale-105 transition-transform shrink-0"
           />
+          <span className="font-sans font-extrabold text-xl xl:text-2xl tracking-tight text-emerald-950 whitespace-nowrap">
+            WhatsUp <span style={{ color: "#2e7d32" }}>Marketplace</span>
+          </span>
         </Link>
 
         {/* Headline */}
@@ -314,12 +317,15 @@ export default function Login() {
       ═══════════════════════════════════════════════════════════ */}
       <div className="flex-1 min-h-screen h-full w-full relative z-10 flex flex-col items-center justify-center lg:justify-start lg:pl-4 xl:pl-10 p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto">
         {/* Mobile logo */}
-        <Link to="/" className="lg:hidden mb-6 flex items-center gap-2.5 shrink-0 hover:opacity-90 transition-opacity cursor-pointer">
+        <Link to="/" className="lg:hidden mb-6 flex items-center gap-2.5 shrink-0 hover:opacity-90 transition-opacity cursor-pointer group">
           <img
             src={logoImg}
             alt="WhatsUp Marketplace Logo"
-            className="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md"
+            className="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md group-hover:scale-105 transition-transform shrink-0"
           />
+          <span className="font-sans font-extrabold text-lg tracking-tight text-emerald-950 whitespace-nowrap">
+            WhatsUp <span style={{ color: "#2e7d32" }}>Marketplace</span>
+          </span>
         </Link>
 
         {/* White Card */}
@@ -573,8 +579,8 @@ export default function Login() {
                 </motion.button>
               </form>
 
-              {/* Mode Switch Link */}
-              <div className="pt-3 text-center border-t border-emerald-100/60 mt-3">
+              {/* Mode Switch Link & Disclaimer */}
+              <div className="pt-3 text-center border-t border-emerald-100/60 mt-3 space-y-2">
                 <p className="text-[12.5px]" style={{ color: "#5a7a5a" }}>
                   {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
                   <button
@@ -588,6 +594,9 @@ export default function Login() {
                   >
                     {isRegister ? "Sign In" : "Register"}
                   </button>
+                </p>
+                <p className="text-[10px] text-gray-400 leading-tight">
+                  WhatsUp Marketplace is an independent software tool and is not affiliated with or endorsed by WhatsApp LLC or Meta Platforms, Inc.
                 </p>
               </div>
             </div>

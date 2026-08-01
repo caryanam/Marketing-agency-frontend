@@ -35,20 +35,25 @@ export function Navbar({ darkTheme = false }: { darkTheme?: boolean }) {
       }`}
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-        <Link to="/" className="flex items-center gap-3 group shrink-0">
+        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 xl:gap-3 group shrink-0">
           <img
             src={logoImg}
             alt="WhatsUp Marketplace Logo"
-            className="h-10 sm:h-12 w-auto object-contain rounded-xl bg-white p-1 shadow-md group-hover:scale-105 transition-transform"
+            className="h-9 sm:h-10 xl:h-12 w-auto object-contain rounded-xl bg-white p-1 shadow-md group-hover:scale-105 transition-transform shrink-0"
           />
+          <span className={`font-sans font-extrabold text-sm sm:text-base xl:text-lg tracking-tight whitespace-nowrap ${
+            darkTheme ? "text-white" : "text-emerald-deep"
+          }`}>
+            WhatsUp <span className={darkTheme ? "text-sunny" : "text-brand"}>Marketplace</span>
+          </span>
         </Link>
 
-        <div className={`hidden lg:flex items-center gap-0.5 xl:gap-1 rounded-full px-1.5 py-1.5 xl:px-2 xl:py-2 ${darkTheme ? "bg-white/10 backdrop-blur border border-white/10" : "glass-card"}`}>
+        <div className={`hidden lg:flex items-center gap-0.5 xl:gap-1 rounded-full px-1 py-1 xl:px-2 xl:py-2 ${darkTheme ? "bg-white/10 backdrop-blur border border-white/10" : "glass-card"}`}>
           {nav.map((n) => (
             <Link
               key={n.label}
               to={n.to}
-              className={`px-2.5 xl:px-4 py-1.5 xl:py-2 rounded-full text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`px-2 xl:px-3.5 py-1.5 xl:py-2 rounded-full text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                 darkTheme
                   ? "text-white/80 hover:text-white hover:bg-white/15"
                   : "text-foreground/70 hover:text-emerald-deep hover:bg-white"

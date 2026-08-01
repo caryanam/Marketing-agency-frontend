@@ -106,12 +106,19 @@ export default function PrivacyPolicy() {
 
             <div>
               <h2 className="font-display font-black text-2xl text-emerald-deep mb-4">
-                5. Contact Privacy Officer
+                5. Non-Affiliation & Contact Privacy Officer
               </h2>
+              <p className="mb-3">
+                WhatsUp Marketplace is an independent software tool developed by Caryanamindia Pvt Ltd. We are not affiliated, authorized, endorsed by, or in any way officially connected with WhatsApp LLC, Meta Platforms, Inc., or any of their subsidiaries.
+              </p>
               <p>
-                If you have questions regarding our privacy practices or data processing, please contact us at <a href="mailto:privacy@whatsupmarketplace.com" className="text-brand font-bold underline">privacy@whatsupmarketplace.com</a>.
+                If you have questions regarding our privacy practices or data processing, please contact us at <a href="mailto:support@whatsupmarketplace.com" className="text-brand font-bold underline">support@whatsupmarketplace.com</a>.
               </p>
             </div>
+
+
+
+
 
           </div>
         </section>

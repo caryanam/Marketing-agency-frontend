@@ -104,8 +104,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Phone Support</div>
-                  <a href="tel:+917755994123" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition">
-                    +91 7755994123
+                  <a href="tel:+917030682123" className="font-bold text-emerald-deep text-base mt-0.5 block hover:text-brand transition">
+                    +91 7030682123
                   </a>
                   <div className="text-[11px] text-brand font-semibold">Mon – Sat, 9 AM – 8 PM IST</div>
                 </div>
@@ -238,7 +238,7 @@ export default function ContactPage() {
                 )}
 
                 <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border/40 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-emerald-deep font-semibold">
-                  <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7755994123</div>
+                  <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7030682123</div>
                   <div className="flex items-center gap-2 min-w-0"><Mail className="h-4 w-4 text-brand shrink-0" /> <span className="truncate">support@whatsupmarketplace.com</span></div>
                   <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand shrink-0" /> Kharadi, Pune, 411014</div>
                 </div>

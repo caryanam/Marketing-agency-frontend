@@ -7,7 +7,7 @@ export default function RefundPolicy() {
     <div className="min-h-screen bg-cream font-sans flex flex-col justify-between">
       <div>
         <Navbar />
-        
+
         {/* Hero Banner */}
         <section className="pt-32 pb-16 bg-cream text-foreground relative border-b border-emerald-100/60">
           <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
@@ -28,7 +28,7 @@ export default function RefundPolicy() {
         {/* Content Section */}
         <section className="py-16 max-w-4xl mx-auto px-6">
           <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-float border border-emerald-100/60 space-y-10 text-foreground/80 leading-relaxed text-sm sm:text-base">
-            
+
             <div className="p-6 rounded-2xl bg-red-50 border border-red-200 text-red-900 space-y-2">
               <div className="font-display font-bold text-lg flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
@@ -73,12 +73,16 @@ export default function RefundPolicy() {
 
             <div>
               <h2 className="font-display font-black text-2xl text-emerald-deep mb-4">
-                3. Duplicate Charges & Billing Glitches
+                3. Duplicate Charges & Billing Support
               </h2>
               <p>
                 In the rare event of a technical payment gateway error resulting in duplicate charges for the same invoice, the extra payment will be refunded to your original payment method within 5–7 business days upon verification by our billing team at <a href="mailto:support@whatsupmarketplace.com" className="text-brand font-bold underline">support@whatsupmarketplace.com</a>.
               </p>
             </div>
+
+
+
+
 
           </div>
         </section>

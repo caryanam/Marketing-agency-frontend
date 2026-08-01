@@ -41,7 +41,7 @@ export default function Contact() {
           </form>
 
           <div className="mt-8 grid sm:grid-cols-3 gap-4 text-xs sm:text-sm font-semibold">
-            <div className="flex items-center gap-2 text-emerald-deep"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7755994123</div>
+            <div className="flex items-center gap-2 text-emerald-deep"><PhoneCall className="h-4 w-4 text-brand shrink-0" /> +91 7030682123</div>
             <div className="flex items-center gap-2 text-emerald-deep"><Mail className="h-4 w-4 text-brand shrink-0" /> support@whatsupmarketplace.com</div>
             <div className="flex items-center gap-2 text-emerald-deep"><MapPin className="h-4 w-4 text-brand shrink-0" /> Kharadi, Pune, 411014</div>
           </div>
